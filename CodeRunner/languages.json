@@ -1,0 +1,26 @@
+[
+  {
+    "language": "csharp",
+    "shorthand": "cs",
+    "fileName": "Program.csx",
+    "runCommand": "dotnet script Program.csx"
+  },
+  {
+    "language": "python",
+    "shorthand": "py",
+    "fileName": "program.py",
+    "runCommand": "python3 Program.py"
+  },
+  {
+    "language": "javascript",
+    "shorthand": "js",
+    "fileName": "program.js",
+    "runCommand": "bun run program.js"
+  },
+  {
+    "language": "typescript",
+    "shorthand": "ts",
+    "fileName": "program.ts",
+    "runCommand": "bun run program.ts"
+  }
+]
