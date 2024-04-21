@@ -1,0 +1,17 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="myCodeBlockContainer"></div>
+    <script type="module">
+        import { insertCodeBlock } from './CodeBlock/codeBlock.js';
+      
+        window.onload = function() {
+          insertCodeBlock('myCodeBlockContainer', 'javascript', 'console.log("Hello, world!");');
+        }
+    </script>
+</body>
+</html>

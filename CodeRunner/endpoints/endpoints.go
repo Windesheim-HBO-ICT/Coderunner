@@ -7,7 +7,7 @@ import (
 )
 
 func Init(router *http.ServeMux) {
-	router.HandleFunc("POST /code", codeEndpoint)
+	router.HandleFunc("/code", codeEndpoint)
 }
 
 func bodyToStruct(body io.ReadCloser, s interface{}) error {
