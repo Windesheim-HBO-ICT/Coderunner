@@ -26,12 +26,12 @@ func main() {
 		panic(err)
 	}
 
-	output, err := ExecuteCode(cli, "console.log('Hello, World!')", "typescript")
+	output, err := ExecuteCode(cli, "using System; Console.WriteLine(\"Wow it works\");", "csharp")
 	if err != nil {
 		panic(err)
 	}
 
-	println("Output: ", output)
+	println("Output of code: \n", output)
 }
 
 func ExecuteCode(cli *client.Client, input, language string) (string, error) {
@@ -102,5 +102,8 @@ func RunContainer(cli *client.Client, ImageName, absInFileLoc string) (string, e
 		return "", err
 	}
 
-	return buf.String()[8:], nil
+	output := buf.String()
+	output = strings.Trim(output, "\n")
+
+	return output, nil
 }
