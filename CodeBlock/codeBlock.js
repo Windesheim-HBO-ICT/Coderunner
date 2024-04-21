@@ -4,7 +4,7 @@ const codeBlockHTML = (language) => `
   <p>Language: <span id="language">${language}</span></p>
   <button id="runButton">Run</button>
   <textarea id="codeField" rows="10"></textarea>
-  <iframe id="resultFrame" width="100%" height="300" title="Result Frame"></iframe>
+  <div id="resultFrame" width="100%" height="300" title="Result Frame"></div>
 </div>
 `;
 
@@ -41,7 +41,7 @@ function initializeCodeRunner(initialLanguage, initialCode) {
     };
 
     // Make a POST request to the server
-    await fetch('http://127.0.0.1:8080/code', {
+    await fetch('http://localhost:8080/code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
