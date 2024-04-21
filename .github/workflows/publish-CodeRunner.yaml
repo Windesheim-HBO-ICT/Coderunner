@@ -1,4 +1,4 @@
-name: Publish all LXU docker images to GHCR
+name: Publish CodeRunner
 
 on:
   release:
