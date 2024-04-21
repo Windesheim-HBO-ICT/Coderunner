@@ -4,4 +4,4 @@
 cp /input.txt /source/Program.cs
 
 # Run the C# program
-dotnet run .
+dotnet script /source/Program.cs
