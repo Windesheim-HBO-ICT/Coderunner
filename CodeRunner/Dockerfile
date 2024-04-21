@@ -1,33 +1,33 @@
-# syntax=docker/dockerfile:1
+ARG BASE_IMAGE_BUILDER=golang
+ARG ALPINE_VERSION=3.19
+ARG GO_VERSION=1.22
 
-FROM golang:1.22 AS build-stage
+FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
+ARG GOARCH=arm64
+ARG GOARM
+WORKDIR /tmp/gobuild
+COPY ./ .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} GOARM=${GOARM} \
+    go build \
+    -ldflags="-s -w \
+    -X main.buildSource=Docker"
 
-# Set destination for COPY
-RUN mkdir /CodeRunner
-ADD . /CodeRunner
-WORKDIR /CodeRunner
+FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS docker-builder
+ARG GOARCH=arm64
+ARG GOARM
+ARG DOCKER_VERSION=v26.0.0
+RUN apk add -U -q --progress --no-cache git bash coreutils gcc musl-dev
+WORKDIR /go/src/github.com/docker/cli
+RUN git clone --branch ${DOCKER_VERSION} --single-branch --depth 1 https://github.com/docker/cli.git . > /dev/null 2>&1
+ENV CGO_ENABLED=0 \
+    GOARCH=${GOARCH} \
+    GOARM=${GOARM} \
+    DISABLE_WARN_OUTSIDE_CONTAINER=1
+RUN ./scripts/build/binary
+RUN rm build/docker && mv build/docker-linux-* build/docker
 
-# Download Go modules
-COPY go.mod go.sum ./
-RUN go mod download
-
-# Copy the source code. Note the slash at the end, as explained in
-# https://docs.docker.com/reference/dockerfile/#copy
-COPY *.go ./
-
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o CodeRunner .
-
-# Deploy the application binary into a lean image
-FROM alpine AS build-release-stage
-
-WORKDIR /
-
-# Copy the binary from the build stage
-COPY --from=build-stage /CodeRunner/CodeRunner /CodeRunner
-# Copy the language defenitions to the image
+FROM scratch
+ENTRYPOINT [ "bin/coderunner" ]
 COPY languages.json /languages.json
-
-EXPOSE 8080
-
-ENTRYPOINT ["/CodeRunner"]
+COPY --from=docker-builder /go/src/github.com/docker/cli/build/docker /bin/docker
+COPY --from=builder /tmp/gobuild/CodeRunner /bin/coderunner
