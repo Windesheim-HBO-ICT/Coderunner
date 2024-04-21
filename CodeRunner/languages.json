@@ -2,25 +2,21 @@
   {
     "language": "csharp",
     "shorthand": "cs",
-    "fileName": "Program.csx",
-    "runCommand": "dotnet script Program.csx"
+    "image": "ghcr.io/kraanter/coderunner/lxu/csharp"
   },
   {
     "language": "python",
     "shorthand": "py",
-    "fileName": "program.py",
-    "runCommand": "python3 Program.py"
+    "image": "ghcr.io/kraanter/coderunner/lxu/python:latest"
   },
   {
     "language": "javascript",
     "shorthand": "js",
-    "fileName": "program.js",
-    "runCommand": "bun run program.js"
+    "image": "ghcr.io/kraanter/coderunner/lxu/bun:latest"
   },
   {
     "language": "typescript",
     "shorthand": "ts",
-    "fileName": "program.ts",
-    "runCommand": "bun run program.ts"
+    "image": "ghcr.io/kraanter/coderunner/lxu/bun:latest"
   }
 ]
