@@ -10,6 +10,7 @@ type langDefenition struct {
 	Language string `json:"language"`
 	Shorhand string `json:"shorthand"`
 	Image    string `json:"image"`
+	Local    bool   `json:"local"`
 }
 
 // map of language definitions
@@ -43,7 +44,7 @@ func RunCode(code string, language string) (string, error) {
 }
 
 func runLang(langDef langDefenition, code string) (string, error) {
-	output, err := executeCodeOnImage(code, langDef.Image)
+	output, err := executeCodeOnImage(code, langDef.Image, langDef.Local)
 	if err != nil {
 		return "", fmt.Errorf("Error executing code: %v", err)
 	}

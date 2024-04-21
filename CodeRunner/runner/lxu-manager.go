@@ -6,7 +6,7 @@ import (
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/utility"
 )
 
-func executeCodeOnImage(input, image string) (string, error) {
+func executeCodeOnImage(input, image string, isLocalImage bool) (string, error) {
 	// Get current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -22,7 +22,7 @@ func executeCodeOnImage(input, image string) (string, error) {
 	// Delete the input file
 	defer os.Remove("./input.txt")
 
-	output, err := utility.RunContainer(image, cwd+"/input.txt")
+	output, err := utility.RunContainer(image, isLocalImage, cwd+"/input.txt")
 	if err != nil {
 		return "", err
 	}

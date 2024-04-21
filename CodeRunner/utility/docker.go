@@ -15,10 +15,12 @@ import (
 
 var cli, _ = client.NewClientWithOpts(client.FromEnv)
 
-func RunContainer(imageName, absInFileLoc string) (string, error) {
+func RunContainer(imageName string, isLocalImage bool, absInFileLoc string) (string, error) {
 	// Pull the image
-	if err := PullImage(imageName); err != nil {
-		return "", err
+	if !isLocalImage {
+		if err := PullImage(imageName); err != nil {
+			return "", err
+		}
 	}
 
 	// Run a image same as command: `docker run -v "ABSINFILELOC:/input.txt IMAGENAME`
