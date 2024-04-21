@@ -1,0 +1,44 @@
+name: Publish all LXU docker images to GHCR
+
+on:
+  release:
+    types: [prereleased, released]
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'New version number'
+        required: true
+        type: string
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: kraanter/coderunner
+
+# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: write
+      packages: write
+      #
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: tag and push all images in the LXU directory
+        # Run this command for all directories in the LXU directory
+        #   docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"$0":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"$0":latest "$0"/.
+        run: find ./LXU -type d -mindepth 1 -exec bash -c 'cd "$0" && docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"${0}":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"${0}":latest .' {} \;
+      - name: cleanup docker images
+        run: docker image prune -f -a
+
