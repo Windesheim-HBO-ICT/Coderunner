@@ -46,4 +46,6 @@ jobs:
   build-and-push-lxu:
     if: ${{inputs.publish-lxu}}
     uses: './.github/workflows/publish-LXU.yaml'
+    with:
+      tag: ${{inputs.tag}}
 
