@@ -35,10 +35,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: tag and push all images in the LXU directory
-        # Run this command for all directories in the LXU directory
-        #   docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"$0":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"$0":latest "$0"/.
+      - name: Push all images in the LXU directory
         run: find ./LXU -type d -mindepth 1 -exec bash -c 'cd "$0" && docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"${0}":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"${0}":latest .' {} \;
-      - name: cleanup docker images
+      - name: Cleanup docker images
         run: docker image prune -f -a
 
