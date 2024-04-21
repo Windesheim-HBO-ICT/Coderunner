@@ -15,7 +15,7 @@ import (
 
 var cli, _ = client.NewClientWithOpts(client.FromEnv)
 
-func RunContainer(imageName string, isLocalImage bool, absInFileLoc string) (string, error) {
+func RunContainer(imageName string, isLocalImage bool, code string) (string, error) {
 	// Pull the image
 	if !isLocalImage {
 		if err := PullImage(imageName); err != nil {
@@ -26,9 +26,8 @@ func RunContainer(imageName string, isLocalImage bool, absInFileLoc string) (str
 	// Run a image same as command: `docker run -v "ABSINFILELOC:/input.txt IMAGENAME`
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
 		Image: imageName,
-	}, &container.HostConfig{
-		Binds: []string{absInFileLoc + ":/input.txt"},
-	}, nil, nil, "")
+		Cmd:   []string{"/source/script.sh", code},
+	}, nil, nil, nil, "")
 
 	if err != nil {
 		return "", err
