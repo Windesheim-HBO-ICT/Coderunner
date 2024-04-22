@@ -8,7 +8,6 @@ COPY ./ .
 RUN go build .
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS docker-builder
-ARG GOARCH=arm64
 ARG DOCKER_VERSION=v26.0.0
 RUN apk add -U -q --progress --no-cache git bash coreutils gcc musl-dev
 WORKDIR /go/src/github.com/docker/cli
