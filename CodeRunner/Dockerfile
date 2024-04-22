@@ -19,7 +19,7 @@ ENV CGO_ENABLED=0 \
 RUN ./scripts/build/binary
 RUN rm build/docker && mv build/docker-linux-* build/docker
 
-FROM alpine
+FROM scratch
 ENTRYPOINT [ "bin/coderunner" ]
 COPY languages.json /languages.json
 COPY --from=docker-builder /go/src/github.com/docker/cli/build/docker /bin/docker
