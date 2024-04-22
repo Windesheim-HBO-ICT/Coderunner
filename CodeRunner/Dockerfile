@@ -3,13 +3,9 @@ ARG ALPINE_VERSION=3.19
 ARG GO_VERSION=1.22
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
-ARG GOARCH=arm64
 WORKDIR /tmp/gobuild
 COPY ./ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} \
-    go build \
-    -ldflags="-s -w \
-    -X main.buildSource=Docker"
+RUN go build .
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS docker-builder
 ARG GOARCH=arm64
@@ -18,12 +14,12 @@ RUN apk add -U -q --progress --no-cache git bash coreutils gcc musl-dev
 WORKDIR /go/src/github.com/docker/cli
 RUN git clone --branch ${DOCKER_VERSION} --single-branch --depth 1 https://github.com/docker/cli.git . > /dev/null 2>&1
 ENV CGO_ENABLED=0 \
-    GOARCH=${GOARCH} \
+    # GOARCH=${GOARCH} \
     DISABLE_WARN_OUTSIDE_CONTAINER=1
 RUN ./scripts/build/binary
 RUN rm build/docker && mv build/docker-linux-* build/docker
 
-FROM scratch
+FROM alpine
 ENTRYPOINT [ "bin/coderunner" ]
 COPY languages.json /languages.json
 COPY --from=docker-builder /go/src/github.com/docker/cli/build/docker /bin/docker
