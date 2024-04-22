@@ -4,24 +4,21 @@ ARG GO_VERSION=1.22
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
 ARG GOARCH=arm64
-ARG GOARM
 WORKDIR /tmp/gobuild
 COPY ./ .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} GOARM=${GOARM} \
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${GOARCH} \
     go build \
     -ldflags="-s -w \
     -X main.buildSource=Docker"
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS docker-builder
 ARG GOARCH=arm64
-ARG GOARM
 ARG DOCKER_VERSION=v26.0.0
 RUN apk add -U -q --progress --no-cache git bash coreutils gcc musl-dev
 WORKDIR /go/src/github.com/docker/cli
 RUN git clone --branch ${DOCKER_VERSION} --single-branch --depth 1 https://github.com/docker/cli.git . > /dev/null 2>&1
 ENV CGO_ENABLED=0 \
     GOARCH=${GOARCH} \
-    GOARM=${GOARM} \
     DISABLE_WARN_OUTSIDE_CONTAINER=1
 RUN ./scripts/build/binary
 RUN rm build/docker && mv build/docker-linux-* build/docker
