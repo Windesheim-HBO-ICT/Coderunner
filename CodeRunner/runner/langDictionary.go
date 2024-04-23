@@ -2,17 +2,15 @@ package runner
 
 import (
 	"fmt"
+
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/utility"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 type langDefenition struct {
-	Language   string `json:"language"`
-	Shorhand   string `json:"shorthand"`
-	FileName   string `json:"fileName"`
-	RunCommand string `json:"runCommand"`
+	Language string `json:"language"`
+	Shorhand string `json:"shorthand"`
+	Image    string `json:"image"`
+	Local    bool   `json:"local"`
 }
 
 // map of language definitions
@@ -46,24 +44,10 @@ func RunCode(code string, language string) (string, error) {
 }
 
 func runLang(langDef langDefenition, code string) (string, error) {
-	// Write the code
-	err := utility.WriteToFile(code, langDef.FileName)
-
-	// Remove the file
-	defer os.Remove(langDef.FileName)
-
+	output, err := executeCodeOnImage(code, langDef.Image, langDef.Local)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error executing code: %v", err)
 	}
 
-	cmd := strings.Split(langDef.RunCommand, " ")
-
-	// Run the code
-	out, err := exec.Command(cmd[0], cmd[1:]...).Output()
-
-	if err != nil {
-		return "", err
-	}
-
-	return strings.TrimSpace(string(out)), nil
+	return output, nil
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	err := runner.ParseJSON("languages.json")
+	err := runner.ParseJSON("./languages.json")
 	if err != nil {
 		fmt.Println("Error parsing languages: ", err)
 		return
