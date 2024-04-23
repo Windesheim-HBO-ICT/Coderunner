@@ -2,21 +2,21 @@
   {
     "language": "csharp",
     "shorthand": "cs",
-    "image": "ghcr.io/kraanter/coderunner/lxu/csharp"
+    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/csharp"
   },
   {
     "language": "python",
     "shorthand": "py",
-    "image": "ghcr.io/kraanter/coderunner/lxu/python:latest"
+    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/python:latest"
   },
   {
     "language": "javascript",
     "shorthand": "js",
-    "image": "ghcr.io/kraanter/coderunner/lxu/bun:latest"
+    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/bun:latest"
   },
   {
     "language": "typescript",
     "shorthand": "ts",
-    "image": "ghcr.io/kraanter/coderunner/lxu/bun:latest"
+    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/bun:latest"
   }
 ]
