@@ -4,14 +4,14 @@ class CodeBlock extends HTMLElement {
     this.attachShadow({ mode: 'open' });
   }
 
-  connectedCallback() {
+  async connectedCallback() {
     this.render();
 
     // Get the dropdown element
     const dropdown = this.shadowRoot.querySelector('select');
 
     // Fetch the list of languages from the server
-    fetch('http://localhost:8080/languages')
+    await fetch('http://localhost:8080/languages')
       .then(response => response.json())
       .then(languages => {
         // Populate the dropdown with the list of languages
@@ -25,7 +25,7 @@ class CodeBlock extends HTMLElement {
 
         // Get the language attribute
         const language = this.getAttribute('language');
-        // Set the selected item in the dropdown to the language attribute
+        // Set the selected item in the dropdown to the language
         dropdown.value = language;
       })
       .catch(error => {
