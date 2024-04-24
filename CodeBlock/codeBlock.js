@@ -5,7 +5,14 @@ class CodeBlock extends HTMLElement {
   }
 
   connectedCallback() {
-      this.render();
+    this.render();
+
+      // Get the language attribute from the custom element
+    const language = this.getAttribute('language');
+    // Get the dropdown element
+    const dropdown = this.shadowRoot.querySelector('select');
+    // Set the selected item in the dropdown to the language attribute
+    dropdown.value = language;
   }
 
   render() {
@@ -65,7 +72,11 @@ class CodeBlock extends HTMLElement {
           }
         </style>
         <div class="coderunnerHeader">
-            <p id="language">${this.getAttribute('language')}</p>
+        <select id="language">
+          <option value="javascript">JavaScript</option>
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+        </select>
             <div class="coderunnerHeaderButtons">
             <button id="runButton" class="runButton">Run</button>
             </div>
@@ -86,6 +97,7 @@ class CodeBlock extends HTMLElement {
       const codeInput = this.shadowRoot.getElementById('codeField');
       const runButton = this.shadowRoot.getElementById('runButton');
       const resultFrame = this.shadowRoot.getElementById('resultFrame');
+      const languageDropdown = this.shadowRoot.getElementById('language');
 
       // Set initial values
       codeInput.value = initialCode;
@@ -98,7 +110,7 @@ class CodeBlock extends HTMLElement {
       
           // Prepare data to send to the server
       const requestData = {
-          language: language,
+          language: languageDropdown.value,
           code: code
       };
       
