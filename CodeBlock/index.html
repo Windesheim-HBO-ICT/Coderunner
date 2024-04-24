@@ -4,12 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="./styles.css">
-    <script type="module">
-        import {insertCodeBlock} from "./codeBlock.js"
-        window.onload = function() {
-          insertCodeBlock('myCodeBlockContainer', 'javascript', 'console.log("Hello, world!");');
-        } 
-    </script>
+    <script src="./codeBlockTest.js" type="module"></script>
 </head>
 <body>
     <div class="main">
@@ -24,12 +19,8 @@
         
         <div class="flexcol coderunnerMain">
             <h1 class="title">Coderunner</h1>
-            <div id="myCodeBlockContainer" class="coderunner">
-            </div>
+            <code-block language="javascript" initialCode='console.log("Hello, world!");'></code-block>
         </div>
     </div>
-   
 </body>
-</html> 
-
-<!-- <svg width="32px" height="32px" viewBox="0 0 24.00 24.00" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect x="4" y="4" width="16" height="16" rx="2" stroke="#c00c00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></rect> </g></svg> -->
+</html>
