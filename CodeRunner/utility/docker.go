@@ -32,10 +32,9 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 	println("Found", len(containers), "containers")
 
 	containerID := ""
-	searchImageName := strings.Split(imageName, ":")[0]
 	for _, container := range containers {
-		if container.Image == searchImageName {
-			println("Found container with image: " + searchImageName + " with ID: " + container.ID)
+		if strings.Split(container.Image, ":")[0] == strings.Split(imageName, ":")[0] {
+			println("Found container with image: " + imageName + " with ID: " + container.ID)
 			containerID = container.ID
 			break
 		}
