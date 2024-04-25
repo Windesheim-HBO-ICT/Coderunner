@@ -2,7 +2,7 @@
   {
     "language": "csharp",
     "shorthand": "cs",
-    "image": "ghcr.io/kraanter/coderunner/lxu/csharp"
+    "image": "ghcr.io/kraanter/coderunner/lxu/csharp:latest",
   },
   {
     "language": "python",
