@@ -9,6 +9,7 @@ import (
 func Init(router *http.ServeMux) {
 	router.HandleFunc("/code", codeEndpoint)
 	router.HandleFunc("/languages", languagesEndpoint)
+	router.HandleFunc("/codeSocket", codeWebsocket)
 }
 
 func bodyToStruct(body io.ReadCloser, s interface{}) error {
