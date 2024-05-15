@@ -2,7 +2,7 @@
   {
     "language": "csharp",
     "shorthand": "cs",
-    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/csharp"
+    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/csharp:latest"
   },
   {
     "language": "python",

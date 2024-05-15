@@ -2,12 +2,12 @@ FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0
 ARG TARGETARCH
 WORKDIR /source
 
-RUN dotnet tool install -g dotnet-script
+COPY *.csproj .
+RUN dotnet restore
 
-ENV PATH="${PATH}:/root/.dotnet/tools"
-
-COPY script.sh .
+COPY *.sh .
 RUN chmod +x script.sh
+RUN chmod +x exit.sh
 
-# Run the application
-CMD ["/source/script.sh"]
+# Run the container while input is supplied
+ENTRYPOINT ["/source/exit.sh"]

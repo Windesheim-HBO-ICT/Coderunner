@@ -8,7 +8,7 @@ COPY ./ .
 RUN go build .
 
 FROM ${BASE_IMAGE_BUILDER}:${GO_VERSION}-alpine${ALPINE_VERSION} AS docker-builder
-ARG DOCKER_VERSION=v26.0.0
+ARG DOCKER_VERSION=v23.0.0
 RUN apk add -U -q --progress --no-cache git bash coreutils gcc musl-dev
 WORKDIR /go/src/github.com/docker/cli
 RUN git clone --branch ${DOCKER_VERSION} --single-branch --depth 1 https://github.com/docker/cli.git . > /dev/null 2>&1
