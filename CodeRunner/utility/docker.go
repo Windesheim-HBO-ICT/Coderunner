@@ -3,7 +3,7 @@ package utility
 import (
 	"context"
 	"fmt"
-	"io"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -23,54 +23,89 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 		}
 	}
 
-	// Run a image same as command: `docker run -v "ABSINFILELOC:/input.txt IMAGENAME`
-	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
-		Image: imageName,
-		Cmd:   []string{"/source/script.sh", code},
-	}, nil, nil, nil, "")
-
+	// Check if container is already running
+	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
+		println("Error listing containers", err.Error())
 		return "", err
 	}
+	println("Found", len(containers), "containers")
 
-	// Start the container
-	if err := cli.ContainerStart(context.Background(), resp.ID, container.StartOptions{}); err != nil {
-		return "", err
+	containerID := ""
+	for _, container := range containers {
+		if strings.Split(container.Image, ":")[0] == strings.Split(imageName, ":")[0] {
+			println("Found container with image: " + imageName + " with ID: " + container.ID)
+			containerID = container.ID
+			break
+		}
 	}
 
-	// Wait for the container to finish
-	statusCh, errCh := cli.ContainerWait(context.Background(), resp.ID, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
+	if containerID == "" {
+		// Run a image same as command: `docker run -v "ABSINFILELOC:/input.txt IMAGENAME`
+		resp, err := cli.ContainerCreate(context.Background(), &container.Config{
+			Image: imageName,
+		}, &container.HostConfig{
+			AutoRemove: true,
+		}, nil, nil, "")
 		if err != nil {
+			println("Error creating container", err.Error())
 			return "", err
 		}
-	case <-statusCh:
+
+		containerID = resp.ID
+
+		// Start the container
+		if err := cli.ContainerStart(context.Background(), containerID, container.StartOptions{}); err != nil {
+			println("Error starting container", err.Error())
+			return "", err
+		}
 	}
 
-	// Get the logs
-	out, err := cli.ContainerLogs(context.Background(), resp.ID, container.LogsOptions{ShowStdout: true})
+	// Run this command: docker exec -i container_id2 sh -c 'cat > ./bar/foo.txt' < ./input.txt
+	cmd := exec.Command("docker", "exec", "-i", containerID, "sh", "-c", "cat > /input.txt")
+
+	// Create a pipe to the stdin of the command
+	stdin, err := cmd.StdinPipe()
 	if err != nil {
+		println("Error creating stdin pipe", err.Error())
 		return "", err
 	}
 
-	// Put the logs in a string
+	// Write the code to the stdin of the command
+	if _, err := stdin.Write([]byte(code)); err != nil {
+		println("Error writing to stdin", err.Error())
+		return "", err
+	}
+
+	// Close the stdin pipe
+	if err := stdin.Close(); err != nil {
+		println("Error closing stdin", err.Error())
+		return "", err
+	}
+
+	if err := cmd.Run(); err != nil {
+		println("Error running command", err.Error())
+		return "", err
+	}
+
+	cmd = exec.Command("docker", "exec", containerID, "/source/script.sh")
+
+	// Run the command
 	buf := new(strings.Builder)
-	if _, err = io.Copy(buf, out); err != nil {
-		return "", err
-	}
+	cmd.Stdout = buf
+	cmd.Stderr = buf
 
-	// Remove the container
-	if err := cli.ContainerRemove(context.Background(), resp.ID, container.RemoveOptions{}); err != nil {
+	if err := cmd.Run(); err != nil {
+		println("Error running command", err.Error())
 		return "", err
 	}
 
 	// Remove the header from the log output
 	output := buf.String()
-	if len(output) < 8 {
+	if len(output) < 1 {
 		return "", fmt.Errorf("Error: No output")
 	}
-	output = strings.Trim(output[8:], "\n")
+	output = strings.Trim(output, "\n")
 
 	if strings.HasPrefix(output, "Error") {
 		return "", fmt.Errorf(output)
