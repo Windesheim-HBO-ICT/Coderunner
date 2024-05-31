@@ -2,7 +2,7 @@ name: Publish CodeRunner
 
 on:
   release:
-    types: [prereleased, released]
+    types: [created]
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
@@ -28,6 +28,12 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Dump env
+        run: env | sort
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Push coderunner image
         run: docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }} --tag ghcr.io/${{ env.IMAGE_NAME }}:latest CodeRunner/.
       - name: Cleanup docker images
