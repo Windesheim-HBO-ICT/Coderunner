@@ -44,13 +44,18 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			continue
+		}
+
+		if string(message) == "ping" {
+			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
+			continue
 		}
 
 		outputStream, err := runner.StreamCode(string(message), language)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			continue
 		}
 
 		conn.WriteMessage(websocket.TextMessage, []byte("-- START OUTPUT --"))
@@ -59,7 +64,7 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 			err = conn.WriteMessage(websocket.TextMessage, []byte(output))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				continue
 			}
 		}
 

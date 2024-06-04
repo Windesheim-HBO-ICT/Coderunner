@@ -14,6 +14,7 @@ class CodeBlock extends HTMLElement {
     this.outputMap = {
       "-- START OUTPUT --": () => this.startRun(),
       "-- END OUTPUT --": () => this.endRun(),
+      pong: () => this.ping(),
     };
   }
 
@@ -220,6 +221,7 @@ class CodeBlock extends HTMLElement {
     // Check if the socket is open
     this.socket.onopen = () => {
       console.log("Connected to the server");
+      this.ping();
     };
 
     this.socket.onmessage = (event) => {
@@ -258,6 +260,12 @@ class CodeBlock extends HTMLElement {
       this.socket.send(code);
       this.startRun();
     });
+  }
+
+  ping() {
+    setTimeout(() => {
+      this.socket.send("ping");
+    }, 5000);
   }
 
   endRun() {
