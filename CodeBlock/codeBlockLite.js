@@ -187,12 +187,10 @@ class CodeBlock extends HTMLElement {
     runButton.addEventListener('click', async (event) => {
       event.preventDefault();
 
-      const code = this.shadowRoot.getElementById('code');
-
       // Prepare data to send to the server
       const requestData = {
         language: languageDropdown?.value ?? this.language,
-        code: code
+        code: this.code
       };
 
       // Clear the result frame before making a new request
