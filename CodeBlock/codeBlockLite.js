@@ -45,7 +45,8 @@ class CodeBlock extends HTMLElement {
     this.code = rawCode;
     sandbox.remove();
 
-    console.log(this.code)
+    console.log(this.code);
+    console.log('new stuff');
     this.innerHTML = code;
   }
 
@@ -149,7 +150,7 @@ class CodeBlock extends HTMLElement {
           ${this.createRunButton(false)}
         </div>
         ` : !this.disabled ? this.createRunButton(true) : ''}
-        <pre id="code" class="coderunnerContainer"></pre>
+        <pre id="code" class="coderunnerContainer">${code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
             <h3>Output:</h3>
