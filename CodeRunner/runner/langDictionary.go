@@ -35,18 +35,33 @@ func ParseJSON(file string) error {
 }
 
 func RunCode(code string, language string) (string, error) {
+	stream, err := StreamCode(code, language)
+	if err != nil {
+		return "", err
+	}
+
+	output := ""
+	// Read the output from the stream until it's closed
+	for line := range stream {
+		output += line
+	}
+
+	return output, nil
+}
+
+func StreamCode(code string, language string) (chan string, error) {
 	langDef, ok := langDefs[language]
 	if !ok {
-		return "", fmt.Errorf("Invalid language")
+		return nil, fmt.Errorf("Invalid language")
 	}
 
 	return runLang(langDef, code)
 }
 
-func runLang(langDef langDefenition, code string) (string, error) {
+func runLang(langDef langDefenition, code string) (chan string, error) {
 	output, err := executeCodeOnImage(code, langDef.Image, langDef.Local)
 	if err != nil {
-		return "", fmt.Errorf("Error executing code: %v", err)
+		return nil, fmt.Errorf("Error executing code: %v", err)
 	}
 
 	return output, nil
