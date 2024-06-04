@@ -46,7 +46,6 @@ class CodeBlock extends HTMLElement {
     sandbox.remove();
 
     console.log(this.code);
-    console.log('new stuff');
     this.innerHTML = code;
   }
 
