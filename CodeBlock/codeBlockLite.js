@@ -116,12 +116,13 @@ class CodeBlock extends HTMLElement {
       }
       .previewWarning {
           color: red;
+          margin: 0 1rem;
       }
       </style>
       <div class="flexCol">
         ${!this.disabled ? this.createRunButton(true) : ''}
         <div class="previewWarning">
-          Read only editor preview, gebruik deze om te checken of je code werkt naar behoren
+          Read only editor preview, niet representatief van web interface
         </div>
         <pre id="code" class="coderunnerContainer">${this.code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
