@@ -2,23 +2,12 @@ name: Publish CodeRunner
 
 on:
   release:
-    types: [prereleased, released]
-
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'New version number'
-        required: true
-        type: string
-      publish-lxu:
-        description: 'Build and publish new all new lxu versions'
-        required: true
-        type: boolean
+    types: [created]
 
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME:  windesheim-hbo-ict/coderunner
+  IMAGE_NAME: windesheim-hbo-ict/coderunner
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -40,11 +29,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Push coderunner image
-        run: docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}:${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}:latest CodeRunner/.
+        run: docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }} --tag ghcr.io/${{ env.IMAGE_NAME }}:latest CodeRunner/.
       - name: Cleanup docker images
         run: docker image prune -f -a
   build-and-push-lxu:
-    if: ${{inputs.publish-lxu}}
-    uses: './.github/workflows/publish-LXU.yaml'
+    uses: "./.github/workflows/publish-LXU.yaml"
     with:
-      tag: ${{inputs.tag}}
+      tag: ${{ github.event.release.tag_name }}
