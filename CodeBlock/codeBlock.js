@@ -261,9 +261,12 @@ class CodeBlock extends HTMLElement {
   }
 
   ping() {
-    setTimeout(() => {
+    if (!this.socket) return;
+
+    if (this.pingTimeout) clearTimeout(this.pingTimeout);
+    this.pingTimeout = setTimeout(() => {
       this.socket.send("ping");
-    }, 5000);
+    }, 10000);
   }
 
   endRun() {
@@ -273,9 +276,11 @@ class CodeBlock extends HTMLElement {
     outputButton.classList.add("clearButton");
     const runButton = this.shadowRoot.getElementById("runButton");
     runButton.classList.remove("loader");
+    this.ping();
   }
 
   startRun() {
+    clearTimeout(this.pingTimeout);
     this.running = true;
     this.setResults("");
     this.showLoader();

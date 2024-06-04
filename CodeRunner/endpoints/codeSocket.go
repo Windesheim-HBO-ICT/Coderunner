@@ -32,6 +32,11 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, ok := runner.LangDefs[language]; !ok {
+		http.Error(w, "Language '"+language+"' is not supported", http.StatusUnprocessableEntity)
+		return
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("Could not upgrade connection", err)
@@ -41,11 +46,13 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	for {
-		_, message, err := conn.ReadMessage()
+		msgType, message, err := conn.ReadMessage()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			println("Could not read message", err)
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 			continue
 		}
+		println("Received message: ", string(message), msgType)
 
 		if string(message) == "ping" {
 			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
@@ -54,7 +61,8 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 
 		outputStream, err := runner.StreamCode(string(message), language)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			fmt.Println("Could not run code", err)
+			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 			continue
 		}
 

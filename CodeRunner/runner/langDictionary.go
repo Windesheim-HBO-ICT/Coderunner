@@ -14,7 +14,7 @@ type langDefenition struct {
 }
 
 // map of language definitions
-var langDefs = map[string]langDefenition{}
+var LangDefs = map[string]langDefenition{}
 
 func ParseJSON(file string) error {
 	langList := []langDefenition{}
@@ -27,8 +27,8 @@ func ParseJSON(file string) error {
 
 	// Fill the map
 	for _, lang := range langList {
-		langDefs[lang.Language] = lang
-		langDefs[lang.Shorhand] = lang
+		LangDefs[lang.Language] = lang
+		LangDefs[lang.Shorhand] = lang
 	}
 
 	return nil
@@ -50,7 +50,7 @@ func RunCode(code string, language string) (string, error) {
 }
 
 func StreamCode(code string, language string) (chan string, error) {
-	langDef, ok := langDefs[language]
+	langDef, ok := LangDefs[language]
 	if !ok {
 		return nil, fmt.Errorf("Invalid language")
 	}
