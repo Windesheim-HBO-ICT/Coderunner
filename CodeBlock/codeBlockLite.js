@@ -26,6 +26,8 @@ class CodeBlock extends HTMLElement {
     this.disabled = this.getAttribute('read-only') !== null;
     this.language = this.getAttribute('language');
 
+      const sandbox = document.createElement('div');
+
     let rawCode = this.innerHTML;
     // Create a sandbox element to parse HTML entities (e.g. &lt;)
     (rawCode.match(/&.+;/ig) || []).forEach(entity => {
@@ -37,6 +39,8 @@ class CodeBlock extends HTMLElement {
     });
 
     this.code = rawCode;
+
+    sandbox.remove();
 
     console.log(this.code);
     this.innerHTML = '';
