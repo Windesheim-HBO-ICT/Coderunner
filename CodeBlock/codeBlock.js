@@ -5,6 +5,7 @@ class CodeBlock extends HTMLElement {
       mode: 'open'
     });
     this.imports = [
+      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css',
       'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js',
       'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js',
       'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js',
@@ -152,7 +153,6 @@ class CodeBlock extends HTMLElement {
         display: none;
       }
       </style>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css"></link>
       <div class="flexCol monaco-editor-background ${this.disabled ? 'minimal' : ''}">
       ${this.sandbox ? `
         <div class="coderunnerHeader">
