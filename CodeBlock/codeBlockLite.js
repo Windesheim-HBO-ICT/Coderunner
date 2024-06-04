@@ -64,7 +64,6 @@ class CodeBlock extends HTMLElement {
         border: 1px solid #ddd;
         margin: 1rem 0;
         display: flex;
-        gap: 1rem;
         flex-direction: column;
         position: relative;
       }
@@ -122,7 +121,7 @@ class CodeBlock extends HTMLElement {
       <div class="flexCol">
         ${!this.disabled ? this.createRunButton(true) : ''}
         <div class="previewWarning">
-          <p>Read only editor preview, gebruik deze om te checken of je code werkt naar behoren</p>
+          Read only editor preview, gebruik deze om te checken of je code werkt naar behoren
         </div>
         <pre id="code" class="coderunnerContainer">${this.code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
