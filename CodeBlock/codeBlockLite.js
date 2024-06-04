@@ -58,6 +58,7 @@ class CodeBlock extends HTMLElement {
       .coderunnerContainer {
         overflow: auto;
         resize: vertical;
+        padding: 0 1rem;
       }
       .flexCol {
         border: 1px solid #ddd;
