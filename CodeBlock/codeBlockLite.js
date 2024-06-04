@@ -149,7 +149,7 @@ class CodeBlock extends HTMLElement {
           ${this.createRunButton(false)}
         </div>
         ` : !this.disabled ? this.createRunButton(true) : ''}
-        <pre id="code" class="coderunnerContainer">${code}</pre>
+        <pre id="code" class="coderunnerContainer">${this.code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
             <h3>Output:</h3>
