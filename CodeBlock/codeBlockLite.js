@@ -20,17 +20,11 @@ class CodeBlock extends HTMLElement {
     this.initProperties();
     this.render();
     this.initializeCodeRunner();
-    if (this.sandbox) {
-      this.activateSandbox();
-    }
   }
 
   initProperties() {
-    this.sandbox = this.getAttribute('sandbox') !== null;
     this.disabled = this.getAttribute('read-only') !== null;
     this.language = this.getAttribute('language');
-
-    const sandbox = document.createElement('div');
 
     let rawCode = this.innerHTML;
     // Create a sandbox element to parse HTML entities (e.g. &lt;)
@@ -43,31 +37,9 @@ class CodeBlock extends HTMLElement {
     });
 
     this.code = rawCode;
-    sandbox.remove();
 
     console.log(this.code);
     this.innerHTML = '';
-  }
-
-
-  activateSandbox() {
-    this.createLanguageDropdown();
-  }
-
-  createLanguageDropdown() {
-    const dropdown = this.shadowRoot.querySelector('select');
-    fetch('http://localhost:8080/languages')
-      .then(response => response.json())
-      .then(languages => {
-        languages.forEach(languageObject => {
-          const option = document.createElement('option');
-          option.value = languageObject.language;
-          option.text = languageObject.language;
-          dropdown.appendChild(option);
-        });
-        dropdown.value = this.language;
-      })
-      .catch(error => console.error('Error:', error));
   }
 
   render() {
@@ -82,7 +54,6 @@ class CodeBlock extends HTMLElement {
       .coderunnerContainer {
         overflow: auto;
         resize: vertical;
-        height: ${this.code.split('\n').length + 1 * 1.5}rem;
         min-height: 100px;
       }
       .flexCol {
@@ -143,12 +114,7 @@ class CodeBlock extends HTMLElement {
       }
       </style>
       <div class="flexCol ${this.disabled ? 'minimal' : ''}">
-      ${this.sandbox ? `
-        <div class="coderunnerHeader">
-          <select id="language"></select>
-          ${this.createRunButton(false)}
-        </div>
-        ` : !this.disabled ? this.createRunButton(true) : ''}
+        ${!this.disabled ? this.createRunButton(true) : ''}
         <pre id="code" class="coderunnerContainer">${this.code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
@@ -173,7 +139,6 @@ class CodeBlock extends HTMLElement {
       return;
     const runButton = this.shadowRoot.getElementById('runButton');
     const clearButton = this.shadowRoot.getElementById('clearButton');
-    const languageDropdown = this.shadowRoot.getElementById('language');
 
     // Event listener for the clear button
     clearButton.addEventListener('click', () => {
@@ -189,7 +154,7 @@ class CodeBlock extends HTMLElement {
 
       // Prepare data to send to the server
       const requestData = {
-        language: languageDropdown?.value ?? this.language,
+        language: this.language,
         code: this.code
       };
 
