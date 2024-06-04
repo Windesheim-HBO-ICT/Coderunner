@@ -4,19 +4,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 )
 
 type CodeRequest struct {
 	Language string `json:"language"`
 	Code     string `json:"code"`
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
 }
 
 func codeEndpoint(w http.ResponseWriter, r *http.Request) {

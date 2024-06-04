@@ -96,6 +96,13 @@ func RunContainer(imageName string, isLocalImage bool, code string) (chan string
 		return nil, err
 	}
 
+	// Create a pipe to the stderr of the command
+	// stderr, err := cmd.StderrPipe()
+	// if err != nil {
+	// 	println("Error creating stderr pipe", err.Error())
+	// 	return nil, err
+	// }
+
 	// Start the command
 	if err := cmd.Start(); err != nil {
 		println("Error starting command", err.Error())
@@ -117,6 +124,20 @@ func RunContainer(imageName string, isLocalImage bool, code string) (chan string
 		}
 		close(output)
 	}()
+
+	// // Read the error of the command
+	// go func() {
+	// 	buf := make([]byte, 1024)
+	// 	for {
+	// 		n, err := stderr.Read(buf)
+	// 		if err != nil {
+	// 			break
+	// 		}
+	// 		output <- string(buf[:n])
+	// 	}
+	// 	output <- "-- END OUTPUT --\n"
+	// 	close(output)
+	// }()
 
 	return output, nil
 }

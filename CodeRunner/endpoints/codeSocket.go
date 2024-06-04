@@ -1,11 +1,20 @@
 package endpoints
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 	"github.com/gorilla/websocket"
 )
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -25,6 +34,7 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		fmt.Println("Could not upgrade connection", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -43,6 +53,8 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		conn.WriteMessage(websocket.TextMessage, []byte("-- START OUTPUT --"))
+
 		for output := range outputStream {
 			err = conn.WriteMessage(websocket.TextMessage, []byte(output))
 			if err != nil {
@@ -50,5 +62,7 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+
+		conn.WriteMessage(websocket.TextMessage, []byte("-- END OUTPUT --"))
 	}
 }
