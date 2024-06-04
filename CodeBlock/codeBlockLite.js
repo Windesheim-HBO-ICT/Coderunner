@@ -4,11 +4,6 @@ class CodeBlock extends HTMLElement {
     this.attachShadow({
       mode: 'open'
     });
-    this.imports = [
-      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js',
-    ];
   }
 
   connectedCallback() {
@@ -24,7 +19,6 @@ class CodeBlock extends HTMLElement {
   init() {
     this.initProperties();
     this.render();
-    this.loadMonacoResources();
     this.initializeCodeRunner();
     if (this.sandbox) {
       this.activateSandbox();
@@ -69,10 +63,6 @@ class CodeBlock extends HTMLElement {
           const option = document.createElement('option');
           option.value = languageObject.language;
           option.text = languageObject.language;
-          option.onclick = () => {
-            // set monaco editor language
-            monaco.editor.setModelLanguage(monaco.editor.getModels()[0], languageObject.language.toLowerCase());
-          };
           dropdown.appendChild(option);
         });
         dropdown.value = this.language;
@@ -152,15 +142,14 @@ class CodeBlock extends HTMLElement {
         display: none;
       }
       </style>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css"></link>
-      <div class="flexCol monaco-editor-background ${this.disabled ? 'minimal' : ''}">
+      <div class="flexCol ${this.disabled ? 'minimal' : ''}">
       ${this.sandbox ? `
         <div class="coderunnerHeader">
           <select id="language"></select>
           ${this.createRunButton(false)}
         </div>
         ` : !this.disabled ? this.createRunButton(true) : ''}
-        <div id="editor" class="coderunnerContainer"></div>
+        <div id="code" class="coderunnerContainer"></div>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
             <h3>Output:</h3>
@@ -198,7 +187,7 @@ class CodeBlock extends HTMLElement {
     runButton.addEventListener('click', async (event) => {
       event.preventDefault();
 
-      const code = monaco.editor.getModels()[0].getValue();
+      const code = this.shadowRoot.getElementById('code');
 
       // Prepare data to send to the server
       const requestData = {
@@ -235,75 +224,6 @@ class CodeBlock extends HTMLElement {
     const outputContainer = this.shadowRoot.getElementById('outputContainer');
     outputContainer.classList.remove('hidden');
     output.innerText = result;
-  }
-
-  loadMonacoResources() {
-    const requireConfig = document.createElement('script');
-    requireConfig.innerHTML = `var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } };`;
-    this.shadowRoot.appendChild(requireConfig);
-
-    // Loader function for the resources
-    const loadResource = (resource) => {
-      return new Promise((resolve, reject) => {
-        const node = resource.endsWith('.css') ? document.createElement('link') : document.createElement('script');
-        if (resource.endsWith('.css')) {
-          node.rel = 'stylesheet';
-          node.href = resource
-        } else {
-          node.src = resource;
-        }
-        node.onload = resolve;
-        node.onerror = reject;
-        this.shadowRoot.appendChild(node);
-      });
-    }
-
-    // Loop and load the resources but wait for each to finish before loading the next
-    // This is neccessary because the Monaco editor requires the resources to be loaded in a specific order
-    this.imports.reduce((promise, resource) => {
-      return promise.then(() => loadResource(resource));
-    }, Promise.resolve())
-      .then(() => {
-        if (window.monaco) {
-          this.initializeMonacoEditor();
-        } else {
-          window.require(['vs/editor/editor.main'], () => {
-            this.initializeMonacoEditor();
-          });
-        }
-      })
-      .catch((error) => console.error('Failed to load Monaco Editor:', error));
-  }
-
-  initializeMonacoEditor() {
-    console.log('Monaco Editor initialized');
-    const curTheme = localStorage.getItem('theme') ?? 'light';
-    const editorContainer = this.shadowRoot.getElementById('editor');
-    const scrollbarsStyle = this.disabled ? 'hidden' : 'auto';
-    monaco.editor.create(editorContainer, {
-      value: this.code || '',
-      language: this.language || 'javascript',
-      theme: 'vs-' + curTheme,
-      automaticLayout: true,
-      scrollBeyondLastLine: false,
-      minimap: {
-        enabled: false
-      },
-      fixedOverflowWidgets: true,
-      wordWrap: 'on',
-      scrollbar: {
-        vertical: scrollbarsStyle,
-        horizontal: scrollbarsStyle
-      },
-      // Read-only settings
-      glyphMargin: !this.disabled,
-      renderFinalNewline: !this.disabled,
-      readOnly: this.disabled
-    });
-
-    document.addEventListener("themechange", (e) => {
-      monaco.editor.setTheme(e.detail.theme === 'light' ? 'vs-light' : 'vs-dark')
-    })
   }
 }
 
