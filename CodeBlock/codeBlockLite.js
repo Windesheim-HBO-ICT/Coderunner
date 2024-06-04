@@ -120,7 +120,7 @@ class CodeBlock extends HTMLElement {
           color: red;
       }
       </style>
-      <div class="flexCol ${this.disabled ? 'minimal' : ''}">
+      <div class="flexCol minimal">
         ${!this.disabled ? this.createRunButton(true) : ''}
         <div class="previewWarning">
           <p>Read only editor preview, gebruik deze om te checken of je code werkt naar behoren</p>
