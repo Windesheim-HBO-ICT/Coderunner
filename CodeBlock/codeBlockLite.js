@@ -98,7 +98,6 @@ class CodeBlock extends HTMLElement {
       }
       .flexRow {
         display: flex;
-        justify-content: space-between;
         align-items: center;
       }
       .clearButton {
@@ -120,7 +119,7 @@ class CodeBlock extends HTMLElement {
           color: red;
       }
       </style>
-      <div class="flexCol minimal">
+      <div class="flexCol">
         ${!this.disabled ? this.createRunButton(true) : ''}
         <div class="previewWarning">
           <p>Read only editor preview, gebruik deze om te checken of je code werkt naar behoren</p>
