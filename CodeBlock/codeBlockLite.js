@@ -26,7 +26,7 @@ class CodeBlock extends HTMLElement {
     this.disabled = this.getAttribute('read-only') !== null;
     this.language = this.getAttribute('language');
 
-      const sandbox = document.createElement('div');
+    const sandbox = document.createElement('div');
 
     let rawCode = this.innerHTML;
     // Create a sandbox element to parse HTML entities (e.g. &lt;)
@@ -116,9 +116,15 @@ class CodeBlock extends HTMLElement {
       .hidden {
         display: none;
       }
+      .previewWarning {
+          color: red;
+      }
       </style>
       <div class="flexCol ${this.disabled ? 'minimal' : ''}">
         ${!this.disabled ? this.createRunButton(true) : ''}
+        <div class="previewWarning">
+          <p>Read only editor preview, gebruik deze om te checken of je code werkt naar behoren</p>
+        </div>
         <pre id="code" class="coderunnerContainer">${this.code}</pre>
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
