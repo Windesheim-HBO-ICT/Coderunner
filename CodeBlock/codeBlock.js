@@ -58,7 +58,6 @@ class CodeBlock extends HTMLElement {
     this.code = rawCode;
     sandbox.remove();
 
-    console.log(this.code);
     this.innerHTML = "";
   }
 
@@ -251,7 +250,6 @@ class CodeBlock extends HTMLElement {
     runButton.addEventListener("click", async (event) => {
       event.preventDefault();
 
-      console.log("Running code...", this.running);
       if (this.running) return;
 
       const code = monaco.editor.getModels()[0].getValue();
