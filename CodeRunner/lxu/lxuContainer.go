@@ -13,6 +13,26 @@ type LXUContainer struct {
 	containerID string
 }
 
+func RunCode(language string, code string) (string, error) {
+	langDef, ok := runner.LangDefs[language]
+	if !ok {
+		return "", fmt.Errorf("Invalid language")
+	}
+
+	lxuContainer, err := StartLXUContainer(langDef.Language)
+	if err != nil {
+		return "", err
+	}
+	defer lxuContainer.Stop()
+
+	output, err := lxuContainer.RunCode(code)
+	if err != nil {
+		return "", err
+	}
+
+	return output, nil
+}
+
 func StartLXUContainer(language string) (*LXUContainer, error) {
 	langDef, ok := runner.LangDefs[language]
 	if !ok {

@@ -24,8 +24,10 @@ func StartContainer(imageName string, isLocalImage bool) (string, error) {
 
 	// Run a image same as command: `docker run -di --rm IMAGENAME`
 	resp, err := cli.ContainerCreate(context.Background(), &container.Config{
-		Image:     imageName,
-		OpenStdin: true,
+		Image:       imageName,
+		OpenStdin:   true,
+		StdinOnce:   true,
+		AttachStdin: true,
 	}, &container.HostConfig{
 		AutoRemove: true,
 	}, nil, nil, "")
@@ -37,6 +39,29 @@ func StartContainer(imageName string, isLocalImage bool) (string, error) {
 		return "", err
 	}
 
+	// Attach to the container
+	waiter, err := cli.ContainerAttach(context.Background(), resp.ID, container.AttachOptions{
+		Stream: true,
+		Stdin:  true,
+		Stdout: true,
+		Stderr: true,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// Do this to prevent the container from closing
+	// And to make sure the container is closed when the program is done
+	go func() {
+		for {
+			buf := make([]byte, 1024)
+			_, err := waiter.Reader.Read(buf)
+			if err != nil {
+				break
+			}
+		}
+	}()
+
 	return resp.ID, nil
 }
 
@@ -46,132 +71,6 @@ func StopContainer(containerID string) error {
 }
 
 func RunCodeOnContainer(code, containerID string) (chan string, error) {
-	// Run this command: docker exec -i container_id2 sh -c 'cat > ./bar/foo.txt' < ./input.txt
-	cmd := exec.Command("docker", "exec", "-i", containerID, "sh", "-c", "cat > /input.txt")
-
-	// Create a pipe to the stdin of the command
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		println("Error creating stdin pipe", err.Error())
-		return nil, err
-	}
-
-	// Write the code to the stdin of the command
-	if _, err := stdin.Write([]byte(code)); err != nil {
-		println("Error writing to stdin", err.Error())
-		return nil, err
-	}
-
-	// Close the stdin pipe
-	if err := stdin.Close(); err != nil {
-		println("Error closing stdin", err.Error())
-		return nil, err
-	}
-
-	if err := cmd.Run(); err != nil {
-		println("Error running command", err.Error())
-		return nil, err
-	}
-
-	cmd = exec.Command("docker", "exec", containerID, "/source/script.sh")
-
-	// Create a pipe to the stdout of the command
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		println("Error creating stdout pipe", err.Error())
-		return nil, err
-	}
-
-	// Create a pipe to the stderr of the command
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		println("Error creating stderr pipe", err.Error())
-		return nil, err
-	}
-
-	// Start the command
-	if err := cmd.Start(); err != nil {
-		println("Error starting command", err.Error())
-		return nil, err
-	}
-
-	// Create a channel to return the output
-	output := make(chan string)
-
-	// Read the output of the command
-	go func() {
-		buf := make([]byte, 1024)
-		for {
-			n, err := stdout.Read(buf)
-			if err != nil {
-				break
-			}
-			output <- string(buf[:n])
-		}
-		close(output)
-	}()
-
-	// Read the error of the command
-	go func() {
-		buf := make([]byte, 1024)
-		for {
-			n, err := stderr.Read(buf)
-			if err != nil {
-				break
-			}
-			output <- string(buf[:n])
-		}
-	}()
-
-	return output, nil
-}
-
-func RunContainer(imageName string, isLocalImage bool, code string) (chan string, error) {
-	// Pull the image
-	if !isLocalImage {
-		if err := PullImage(imageName); err != nil {
-			return nil, err
-		}
-	}
-
-	// Check if container is already running
-	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
-	if err != nil {
-		println("Error listing containers", err.Error())
-		return nil, err
-	}
-	println("Found", len(containers), "containers")
-
-	containerID := ""
-	for _, container := range containers {
-		if strings.Split(container.Image, ":")[0] == strings.Split(imageName, ":")[0] {
-			println("Found container with image: " + imageName + " with ID: " + container.ID)
-			containerID = container.ID
-			break
-		}
-	}
-
-	if containerID == "" {
-		// Run a image same as command: `docker run -v "ABSINFILELOC:/input.txt IMAGENAME`
-		resp, err := cli.ContainerCreate(context.Background(), &container.Config{
-			Image: imageName,
-		}, &container.HostConfig{
-			AutoRemove: true,
-		}, nil, nil, "")
-		if err != nil {
-			println("Error creating container", err.Error())
-			return nil, err
-		}
-
-		containerID = resp.ID
-
-		// Start the container
-		if err := cli.ContainerStart(context.Background(), containerID, container.StartOptions{}); err != nil {
-			println("Error starting container", err.Error())
-			return nil, err
-		}
-	}
-
 	// Run this command: docker exec -i container_id2 sh -c 'cat > ./bar/foo.txt' < ./input.txt
 	cmd := exec.Command("docker", "exec", "-i", containerID, "sh", "-c", "cat > /input.txt")
 
