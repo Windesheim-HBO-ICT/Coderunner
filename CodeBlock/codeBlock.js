@@ -10,6 +10,12 @@ class CodeBlock extends HTMLElement {
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js",
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js",
     ];
+
+    this.outputMap = {
+      "-- START OUTPUT --": () => this.startRun(),
+      "-- END OUTPUT --": () => this.endRun(),
+      pong: () => this.ping(),
+    };
   }
 
   connectedCallback() {
@@ -52,7 +58,6 @@ class CodeBlock extends HTMLElement {
     this.code = rawCode;
     sandbox.remove();
 
-    console.log(this.code);
     this.innerHTML = "";
   }
 
@@ -72,7 +77,6 @@ class CodeBlock extends HTMLElement {
           option.onclick = () => {
             // set monaco editor language
             monaco.editor.setModelLanguage(
-              // monaco.editor.getModels()[0],
               this.monacoModel,
               languageObject.language.toLowerCase(),
             );
@@ -141,22 +145,37 @@ class CodeBlock extends HTMLElement {
         align-items: center;
       }
       .clearButton {
-        background: none;
-        border: none;
         cursor: pointer;
+        border: black 1px solid;
+        padding: 0.5rem;
         font-size: 1.25rem;
-        color: #ff0000;
-        font-weight: 700;
+        color: #333;
       }
       .coderunnerResult {
         padding: 1.25rem;
         border-radius: 0.5rem;
       }
+      .loader {
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        color: transparent !important;
+        animation: spin 2s linear infinite;
+      }
+      .loader svg {
+        display: none;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
       .hidden {
         display: none;
       }
       </style>
-      <div class="flexCol monaco-editor-background ${this.disabled ? "minimal" : ""}">
+      <div class="flexCol monaco-editor monaco-editor-background ${this.disabled ? "minimal" : ""}">
       ${
         this.sandbox
           ? `
@@ -173,7 +192,7 @@ class CodeBlock extends HTMLElement {
         <div id="outputContainer" class="coderunnerOutputContainer hidden">
           <div class="flexRow">
             <h3>Output:</h3>
-            <button id="clearButton" class="clearButton">X</button>
+            <button id="outputButton" class="clearButton">Clear</button>
           </div>
           <hr>
           <pre id="output" class="coderunnerResult"></pre>
@@ -191,14 +210,39 @@ class CodeBlock extends HTMLElement {
   initializeCodeRunner() {
     if (this.disabled) return;
     const runButton = this.shadowRoot.getElementById("runButton");
-    const clearButton = this.shadowRoot.getElementById("clearButton");
+    const clearButton = this.shadowRoot.getElementById("outputButton");
     const languageDropdown = this.shadowRoot.getElementById("language");
+
+    const socket = new WebSocket(
+      "ws://localhost:8080/codeSocket?language=" + this.language,
+    );
+    this.socket = socket;
+    // Check if the socket is open
+    this.socket.onopen = () => {
+      console.log("Connected to the server");
+      this.ping();
+    };
+
+    this.socket.onmessage = (event) => {
+      const data = event.data;
+
+      const mapFunc = this.outputMap[data];
+      if (mapFunc) mapFunc(data);
+      else this.appendResults(event.data);
+    };
+
+    // Check if the socket is closed
+    this.socket.onclose = () => {
+      console.log("Disconnected from the server");
+      runButton.disabled = true;
+      this.socket = null;
+    };
 
     // Event listener for the clear button
     clearButton.addEventListener("click", () => {
-      if (this.shadowRoot.getElementById("output").innerText === "Running...")
-        return;
-      this.shadowRoot.getElementById("output").innerText = "";
+      if (this.running) return;
+
+      this.setResults("");
       this.shadowRoot.getElementById("outputContainer").classList.add("hidden");
     });
 
@@ -206,38 +250,47 @@ class CodeBlock extends HTMLElement {
     runButton.addEventListener("click", async (event) => {
       event.preventDefault();
 
-      // const code = monaco.editor.getModels()[0].getValue();
-      const code = this.monacoModel.getValue();
-      console.log("running code:", code);
+      if (this.running) return;
 
-      // Prepare data to send to the server
-      const requestData = {
-        language: languageDropdown?.value ?? this.language,
-        code: code,
-      };
+      const code = monaco.editor.getModels()[0].getValue();
 
-      // Clear the result frame before making a new request
-      this.setResults("Running...");
-
-      // Make a POST request to the server
-      await fetch("http://localhost:8080/code", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      })
-        .then((response) => response.text())
-        .then((result) => {
-          // Display the result received from the server
-          this.setResults(result);
-        })
-        .catch((error) => {
-          // Log the error
-          console.error("Error:", error);
-          this.setResults("An error occurred. Please try again.");
-        });
+      // Send the data to the server
+      this.socket.send(code);
+      this.startRun();
     });
+  }
+
+  ping() {
+    if (!this.socket) return;
+
+    if (this.pingTimeout) clearTimeout(this.pingTimeout);
+    this.pingTimeout = setTimeout(() => {
+      this.socket.send("ping");
+    }, 10000);
+  }
+
+  endRun() {
+    this.running = false;
+    const outputButton = this.shadowRoot.getElementById("outputButton");
+    outputButton.classList.value = "";
+    outputButton.classList.add("clearButton");
+    const runButton = this.shadowRoot.getElementById("runButton");
+    runButton.classList.remove("loader");
+    this.ping();
+  }
+
+  startRun() {
+    clearTimeout(this.pingTimeout);
+    this.running = true;
+    this.setResults("");
+    this.showLoader();
+  }
+
+  showLoader() {
+    const outputButton = this.shadowRoot.getElementById("outputButton");
+    outputButton.classList.value = "hidden";
+    const runButton = this.shadowRoot.getElementById("runButton");
+    runButton.classList.add("loader");
   }
 
   setResults(result) {
@@ -245,6 +298,11 @@ class CodeBlock extends HTMLElement {
     const outputContainer = this.shadowRoot.getElementById("outputContainer");
     outputContainer.classList.remove("hidden");
     output.innerText = result;
+  }
+
+  appendResults(result) {
+    const output = this.shadowRoot.getElementById("output");
+    output.innerText += result;
   }
 
   loadMonacoResources() {

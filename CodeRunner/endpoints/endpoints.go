@@ -7,8 +7,16 @@ import (
 )
 
 func Init(router *http.ServeMux) {
-	router.HandleFunc("/code", codeEndpoint)
-	router.HandleFunc("/languages", languagesEndpoint)
+	router.HandleFunc("/code", logginMiddleware(codeEndpoint))
+	router.HandleFunc("/languages", logginMiddleware(languagesEndpoint))
+	router.HandleFunc("/codeSocket", logginMiddleware(codeWebsocket))
+}
+
+func logginMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		println(r.Method, r.URL.Path)
+		next(w, r)
+	}
 }
 
 func bodyToStruct(body io.ReadCloser, s interface{}) error {
