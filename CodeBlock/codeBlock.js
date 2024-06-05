@@ -80,7 +80,7 @@ class CodeBlock extends HTMLElement {
       })
       .catch(error => {
         console.error('Error:', error);
-        this.showToaster('Code-Block is unable to connect with the Code-Runner server. Please refer to our <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentation</a> for more information.', 'warning');
+        this.showToaster('Code-Block kan geen verbinding maken met de Code-Runner server. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.', 'warning');
       });
   }
 
@@ -276,7 +276,7 @@ class CodeBlock extends HTMLElement {
           // Log the error
           console.error('Error:', error);
           this.setResults('An error occurred. Please try again.');
-          this.showToaster('Code-Block could not send your code to the Code-Runner server. Please refer to our <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentation</a> for more information.', 'danger');
+          this.showToaster('Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.', 'danger');
         });
     });
   }
