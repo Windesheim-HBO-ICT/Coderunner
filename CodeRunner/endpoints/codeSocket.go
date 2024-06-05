@@ -46,13 +46,11 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	for {
-		msgType, message, err := conn.ReadMessage()
+		_, message, err := conn.ReadMessage()
 		if err != nil {
-			println("Could not read message", err)
-			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-			continue
+			// If the connection is closed, we can ignore the error and stop the loop
+			return
 		}
-		println("Received message: ", string(message), msgType)
 
 		if string(message) == "ping" {
 			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
