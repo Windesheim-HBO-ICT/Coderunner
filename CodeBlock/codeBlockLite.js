@@ -4,15 +4,15 @@ class CodeBlock extends HTMLElement {
     this.attachShadow({
       mode: 'open'
     });
+    this.initialized = false;
   }
 
   connectedCallback() {
     // Initialize the component after the browser has finished rendering
     // This is necessary because we need the innerHTML of the component to be available
     console.log("connected");
-      let initialized = false;
     window.requestAnimationFrame(() => {
-      if (initialized) return;
+      if (this.initialized) return;
       setTimeout(() => {
         this.init();
       });
@@ -24,6 +24,7 @@ class CodeBlock extends HTMLElement {
     this.initProperties();
     this.render();
     this.initializeCodeRunner();
+    this.initialized = true;
   }
 
   initProperties() {
