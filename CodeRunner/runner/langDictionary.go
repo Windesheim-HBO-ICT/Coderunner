@@ -14,7 +14,7 @@ type langDefenition struct {
 }
 
 // map of language definitions
-var langDefs = map[string]langDefenition{}
+var LangDefs = map[string]langDefenition{}
 
 func ParseJSON(file string) error {
 	langList := []langDefenition{}
@@ -27,26 +27,41 @@ func ParseJSON(file string) error {
 
 	// Fill the map
 	for _, lang := range langList {
-		langDefs[lang.Language] = lang
-		langDefs[lang.Shorhand] = lang
+		LangDefs[lang.Language] = lang
+		LangDefs[lang.Shorhand] = lang
 	}
 
 	return nil
 }
 
 func RunCode(code string, language string) (string, error) {
-	langDef, ok := langDefs[language]
+	stream, err := StreamCode(code, language)
+	if err != nil {
+		return "", err
+	}
+
+	output := ""
+	// Read the output from the stream until it's closed
+	for line := range stream {
+		output += line
+	}
+
+	return output, nil
+}
+
+func StreamCode(code string, language string) (chan string, error) {
+	langDef, ok := LangDefs[language]
 	if !ok {
-		return "", fmt.Errorf("Invalid language")
+		return nil, fmt.Errorf("Invalid language")
 	}
 
 	return runLang(langDef, code)
 }
 
-func runLang(langDef langDefenition, code string) (string, error) {
+func runLang(langDef langDefenition, code string) (chan string, error) {
 	output, err := executeCodeOnImage(code, langDef.Image, langDef.Local)
 	if err != nil {
-		return "", fmt.Errorf("Error executing code: %v", err)
+		return nil, fmt.Errorf("Error executing code: %v", err)
 	}
 
 	return output, nil

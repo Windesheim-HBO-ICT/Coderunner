@@ -2,7 +2,6 @@ package utility
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 	"sync"
@@ -15,11 +14,11 @@ import (
 
 var cli, _ = client.NewClientWithOpts(client.FromEnv)
 
-func RunContainer(imageName string, isLocalImage bool, code string) (string, error) {
+func RunContainer(imageName string, isLocalImage bool, code string) (chan string, error) {
 	// Pull the image
 	if !isLocalImage {
 		if err := PullImage(imageName); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
@@ -27,7 +26,7 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 	containers, err := cli.ContainerList(context.Background(), container.ListOptions{})
 	if err != nil {
 		println("Error listing containers", err.Error())
-		return "", err
+		return nil, err
 	}
 	println("Found", len(containers), "containers")
 
@@ -49,7 +48,7 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 		}, nil, nil, "")
 		if err != nil {
 			println("Error creating container", err.Error())
-			return "", err
+			return nil, err
 		}
 
 		containerID = resp.ID
@@ -57,7 +56,7 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 		// Start the container
 		if err := cli.ContainerStart(context.Background(), containerID, container.StartOptions{}); err != nil {
 			println("Error starting container", err.Error())
-			return "", err
+			return nil, err
 		}
 	}
 
@@ -68,48 +67,75 @@ func RunContainer(imageName string, isLocalImage bool, code string) (string, err
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		println("Error creating stdin pipe", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	// Write the code to the stdin of the command
 	if _, err := stdin.Write([]byte(code)); err != nil {
 		println("Error writing to stdin", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	// Close the stdin pipe
 	if err := stdin.Close(); err != nil {
 		println("Error closing stdin", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	if err := cmd.Run(); err != nil {
 		println("Error running command", err.Error())
-		return "", err
+		return nil, err
 	}
 
 	cmd = exec.Command("docker", "exec", containerID, "/source/script.sh")
 
-	// Run the command
-	buf := new(strings.Builder)
-	cmd.Stdout = buf
-	cmd.Stderr = buf
-
-	if err := cmd.Run(); err != nil {
-		println("Error running command", err.Error())
-		return "", err
+	// Create a pipe to the stdout of the command
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		println("Error creating stdout pipe", err.Error())
+		return nil, err
 	}
 
-	// Remove the header from the log output
-	output := buf.String()
-	if len(output) < 1 {
-		return "", fmt.Errorf("Error: No output")
+	// Create a pipe to the stderr of the command
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		println("Error creating stderr pipe", err.Error())
+		return nil, err
 	}
-	output = strings.Trim(output, "\n")
 
-	if strings.HasPrefix(output, "Error") {
-		return "", fmt.Errorf(output)
+	// Start the command
+	if err := cmd.Start(); err != nil {
+		println("Error starting command", err.Error())
+		return nil, err
 	}
+
+	// Create a channel to return the output
+	output := make(chan string)
+
+	// Read the output of the command
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stdout.Read(buf)
+			if err != nil {
+				break
+			}
+			output <- string(buf[:n])
+		}
+		close(output)
+	}()
+
+	// Read the error of the command
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := stderr.Read(buf)
+			if err != nil {
+				break
+			}
+			output <- string(buf[:n])
+		}
+	}()
 
 	return output, nil
 }
