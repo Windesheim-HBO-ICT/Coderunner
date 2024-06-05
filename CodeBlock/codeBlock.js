@@ -77,7 +77,7 @@ class CodeBlock extends HTMLElement {
           option.onclick = () => {
             // set monaco editor language
             monaco.editor.setModelLanguage(
-              monaco.editor.getModels()[0],
+              this.monacoModel,
               languageObject.language.toLowerCase(),
             );
           };
@@ -351,7 +351,7 @@ class CodeBlock extends HTMLElement {
     const curTheme = localStorage.getItem("theme") ?? "light";
     const editorContainer = this.shadowRoot.getElementById("editor");
     const scrollbarsStyle = this.disabled ? "hidden" : "auto";
-    monaco.editor.create(editorContainer, {
+    this.monacoModel = monaco.editor.create(editorContainer, {
       value: this.code || "",
       language: this.language || "javascript",
       theme: "vs-" + curTheme,
@@ -371,6 +371,8 @@ class CodeBlock extends HTMLElement {
       renderFinalNewline: !this.disabled,
       readOnly: this.disabled,
     });
+
+    console.log("This model created", this.monacoModel);
 
     document.addEventListener("themechange", (e) => {
       monaco.editor.setTheme(
