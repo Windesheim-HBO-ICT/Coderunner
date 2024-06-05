@@ -328,6 +328,11 @@ class CodeBlock extends HTMLElement {
       this.socket = socket;
       this.updateActionButtonState();
       this.ping();
+
+      this.showToaster(
+        "Verbinding met de Code-Runner server gemaakt.",
+        "success",
+      );
     };
 
     socket.onmessage = (event) => {
@@ -506,8 +511,6 @@ class CodeBlock extends HTMLElement {
       readOnly: this.disabled,
     });
 
-    console.log("This model created", this.monacoModel);
-
     document.addEventListener("themechange", (e) => {
       monaco.editor.setTheme(
         e.detail.theme === "light" ? "vs-light" : "vs-dark",
@@ -522,6 +525,11 @@ class CodeBlock extends HTMLElement {
     toaster.classList.remove("slideDown");
     toaster.classList.remove("hidden");
     toasterMessage.innerHTML = message;
+
+    if (type === "success")
+      setTimeout(() => {
+        toaster.classList.add("slideDown");
+      }, 3000);
   }
 
   createToasterDismissButton() {
