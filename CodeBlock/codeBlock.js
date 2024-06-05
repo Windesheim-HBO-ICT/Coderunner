@@ -1,3 +1,11 @@
+const CodeBlockActionButtonState = Object.freeze({
+  RUN: Symbol(0),
+  LOADING: Symbol(1),
+  STOP: Symbol(2),
+  RECONNECT: Symbol(3),
+  NONE: Symbol(4),
+});
+
 class CodeBlock extends HTMLElement {
   constructor() {
     super();
@@ -12,7 +20,7 @@ class CodeBlock extends HTMLElement {
     ];
 
     this.outputMap = {
-      "-- START OUTPUT --": () => this.startRun(),
+      "-- START OUTPUT --": () => this.runCode(),
       "-- END OUTPUT --": () => this.endRun(),
       pong: () => this.ping(),
     };
@@ -39,6 +47,7 @@ class CodeBlock extends HTMLElement {
   }
 
   initProperties() {
+    this.actionButtonState = CodeBlockActionButtonState.NONE;
     this.sandbox = this.getAttribute("sandbox") !== null;
     this.disabled = this.getAttribute("read-only") !== null;
     this.language = this.getAttribute("language");
@@ -138,6 +147,10 @@ class CodeBlock extends HTMLElement {
         z-index: 25;
         top: 0.75rem;
         right: 1.25rem;
+        width: 25px;
+        height: 25px;
+        color: inherit;
+        padding: 0;
         cursor: pointer;
         background: none;
         border: none;
@@ -260,14 +273,44 @@ class CodeBlock extends HTMLElement {
   createRunButton(absolute) {
     const classList = absolute ? "runButton absolute" : "runButton";
 
-    return `<button id="runButton" class="${classList}"><svg width="32px" height="32px" viewBox="0 0 24.00 24.00" fill="lightgreen" xmlns="http://www.w3.org/2000/svg" transform="rotate(90)" stroke="#2afa00"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.048"></g><g id="SVGRepo_iconCarrier"> <g id="Shape / Triangle"> <path id="Vector" d="M4.37891 15.1999C3.46947 16.775 3.01489 17.5634 3.08281 18.2097C3.14206 18.7734 3.43792 19.2851 3.89648 19.6182C4.42204 20.0001 5.3309 20.0001 7.14853 20.0001H16.8515C18.6691 20.0001 19.5778 20.0001 20.1034 19.6182C20.5619 19.2851 20.8579 18.7734 20.9172 18.2097C20.9851 17.5634 20.5307 16.775 19.6212 15.1999L14.7715 6.79986C13.8621 5.22468 13.4071 4.43722 12.8135 4.17291C12.2957 3.94236 11.704 3.94236 11.1862 4.17291C10.5928 4.43711 10.1381 5.22458 9.22946 6.79845L4.37891 15.1999Z" stroke="#2afa00" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path> </g> </g></svg></button>`;
+    return `<button id="runButton" class="${classList}"></button>`;
   }
 
   initializeCodeRunner() {
     if (this.disabled) return;
+
+    this.bindEvents();
+    this.connectWebSocket();
+  }
+
+  bindEvents() {
     const runButton = this.shadowRoot.getElementById("runButton");
+    if (runButton) this.runButton = runButton;
     const clearButton = this.shadowRoot.getElementById("outputButton");
-    const languageDropdown = this.shadowRoot.getElementById("language");
+    if (clearButton) this.clearButton = clearButton;
+
+    // Event listener for the clear button
+    this.clearButton?.addEventListener("click", () => {
+      if (this.running) return;
+
+      this.setResults("");
+      this.shadowRoot.getElementById("outputContainer").classList.add("hidden");
+    });
+
+    // Event listener for the run button
+    this.runButton?.addEventListener("click", async (event) => {
+      event.preventDefault();
+      this.onActionButtonClick();
+    });
+
+    this.updateActionButtonState();
+  }
+
+  connectWebSocket() {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.close();
+      this.socket = null;
+    }
 
     // Try to connect to the server
     const socket = new WebSocket(
@@ -277,9 +320,9 @@ class CodeBlock extends HTMLElement {
     // Check if the socket is open
     socket.onopen = () => {
       console.log("Connected to the server");
+      if (this.socket) this.socket.close();
       this.socket = socket;
-      runButton.disabled = false;
-      runButton.classList.remove("hidden");
+      this.updateActionButtonState();
       this.ping();
     };
 
@@ -294,8 +337,7 @@ class CodeBlock extends HTMLElement {
     // Check if the socket is closed
     socket.onclose = () => {
       console.log("Disconnected from the server");
-      runButton.disabled = true;
-      runButton.classList.add("hidden");
+
       if (this.socket)
         this.showToaster(
           'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
@@ -306,34 +348,10 @@ class CodeBlock extends HTMLElement {
           'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
           "danger",
         );
+
       this.socket = null;
+      this.updateActionButtonState();
     };
-
-    // Event listener for the clear button
-    clearButton.addEventListener("click", () => {
-      if (this.running) return;
-
-      this.setResults("");
-      this.shadowRoot.getElementById("outputContainer").classList.add("hidden");
-    });
-
-    // Event listener for the run button
-    runButton.addEventListener("click", async (event) => {
-      event.preventDefault();
-
-      if (this.running) return;
-
-      const code = this.monacoModel.getValue();
-
-      if (!this.socket)
-        return this.showToaster(
-          'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
-          "danger",
-        );
-      // Send the data to the server
-      this.socket.send(code);
-      this.startRun();
-    });
   }
 
   ping() {
@@ -347,26 +365,58 @@ class CodeBlock extends HTMLElement {
 
   endRun() {
     this.running = false;
+
     const outputButton = this.shadowRoot.getElementById("outputButton");
     outputButton.classList.value = "";
     outputButton.classList.add("clearButton");
-    const runButton = this.shadowRoot.getElementById("runButton");
-    runButton.classList.remove("loader");
+
+    this.updateActionButtonState();
     this.ping();
   }
 
-  startRun() {
+  runCode(code) {
+    if (!this.socket) {
+      this.showToaster(
+        'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
+        "danger",
+      );
+      return false;
+    }
+
     clearTimeout(this.pingTimeout);
-    this.running = true;
     this.setResults("");
-    this.showLoader();
+    this.running = true;
+    this.socket.send(code);
+    return true;
   }
 
-  showLoader() {
-    const outputButton = this.shadowRoot.getElementById("outputButton");
-    outputButton.classList.value = "hidden";
-    const runButton = this.shadowRoot.getElementById("runButton");
-    runButton.classList.add("loader");
+  onActionButtonClick() {
+    switch (this.actionButtonState) {
+      case CodeBlockActionButtonState.RUN:
+        const code = this.monacoModel.getValue();
+        // Send the data to the server
+        if (this.runCode(code))
+          this.updateActionButtonState(CodeBlockActionButtonState.LOADING);
+        break;
+      case CodeBlockActionButtonState.CANCEL:
+        this.cancelCode();
+        break;
+      case CodeBlockActionButtonState.RECONNECT:
+        this.connectWebSocket();
+        break;
+    }
+  }
+
+  updateActionButtonState(newState) {
+    if (!newState) newState = this.getActionButtonState();
+    this.actionButtonState = newState;
+    this.runButton.innerHTML = icons[newState];
+  }
+
+  getActionButtonState() {
+    if (!this.socket) return CodeBlockActionButtonState.RECONNECT;
+    if (this.running) return CodeBlockActionButtonState.STOP;
+    return CodeBlockActionButtonState.RUN;
   }
 
   setResults(result) {
@@ -481,5 +531,20 @@ class CodeBlock extends HTMLElement {
     return button.outerHTML;
   }
 }
+
+const icons = Object.freeze({
+  [CodeBlockActionButtonState.RUN]: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+</svg>`,
+  [CodeBlockActionButtonState.RECONNECT]: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+</svg>`,
+  [CodeBlockActionButtonState.NONE]: ``,
+  [CodeBlockActionButtonState.STOP]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
+  <line x1="18" y1="6" x2="6" y2="18"></line>
+  <line x1="6" y1="6" x2="18" y2="18"></line>
+</svg>`,
+  [CodeBlockActionButtonState.LOADING]: `<div class="loader"></div>`,
+});
 
 window.customElements.define("code-block", CodeBlock);
