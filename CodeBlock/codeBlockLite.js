@@ -98,6 +98,7 @@ class CodeBlock extends HTMLElement {
       .flexRow {
         display: flex;
         align-items: center;
+        justify-content: space-between;
       }
       .clearButton {
         background: none;
