@@ -309,7 +309,8 @@ class CodeBlock extends HTMLElement {
       if (this.running) return;
 
       const code = monaco.editor.getModels()[0].getValue();
-      if (!this.socket)
+
+      if (this.socket.readyState !== WebSocket.OPEN)
         return this.showToaster(
           'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
           "danger",
