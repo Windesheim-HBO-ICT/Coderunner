@@ -143,7 +143,7 @@ class CodeBlock extends HTMLElement {
       .absolute {
         position: absolute;
       }
-      .runButton {
+      .actionButton {
         z-index: 25;
         top: 0.75rem;
         right: 1.25rem;
@@ -246,11 +246,11 @@ class CodeBlock extends HTMLElement {
           ? `
         <div class="coderunnerHeader">
           <select id="language"></select>
-          ${this.createRunButton(false)}
+          ${this.createActionButton(false)}
         </div>
         `
           : !this.disabled
-            ? this.createRunButton(true)
+            ? this.createActionButton(true)
             : ""
       }
         <div id="editor" class="coderunnerContainer"></div>
@@ -274,10 +274,10 @@ class CodeBlock extends HTMLElement {
     `;
   }
 
-  createRunButton(absolute) {
-    const classList = absolute ? "runButton absolute" : "runButton";
+  createActionButton(absolute) {
+    const classList = absolute ? "actionButton absolute" : "actionButton";
 
-    return `<button id="runButton" class="${classList}"></button>`;
+    return `<button id="actionButton" class="${classList}"></button>`;
   }
 
   initializeCodeRunner() {
@@ -288,8 +288,8 @@ class CodeBlock extends HTMLElement {
   }
 
   bindEvents() {
-    const runButton = this.shadowRoot.getElementById("runButton");
-    if (runButton) this.runButton = runButton;
+    const actionButton = this.shadowRoot.getElementById("actionButton");
+    if (actionButton) this.actionButton = actionButton;
     const clearButton = this.shadowRoot.getElementById("outputButton");
     if (clearButton) this.clearButton = clearButton;
 
@@ -302,7 +302,7 @@ class CodeBlock extends HTMLElement {
     });
 
     // Event listener for the run button
-    this.runButton?.addEventListener("click", async (event) => {
+    this.actionButton?.addEventListener("click", async (event) => {
       event.preventDefault();
       this.onActionButtonClick();
     });
@@ -418,7 +418,7 @@ class CodeBlock extends HTMLElement {
   updateActionButtonState(newState) {
     if (!newState) newState = this.getActionButtonState();
     this.actionButtonState = newState;
-    this.runButton.innerHTML = icons[newState];
+    this.actionButton.innerHTML = icons[newState];
   }
 
   getActionButtonState() {
