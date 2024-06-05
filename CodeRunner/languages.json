@@ -12,7 +12,8 @@
   {
     "language": "javascript",
     "shorthand": "js",
-    "image": "ghcr.io/windesheim-hbo-ict/coderunner/lxu/bun:latest"
+    "image": "lxu-bun",
+    "local": true
   },
   {
     "language": "typescript",

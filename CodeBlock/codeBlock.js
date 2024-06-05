@@ -389,6 +389,12 @@ class CodeBlock extends HTMLElement {
     this.updateActionButtonState();
   }
 
+  stopRun() {
+    if (!this.socket) return;
+
+    this.socket.send("stop");
+  }
+
   runCode(code) {
     if (!this.socket) {
       this.showToaster(
@@ -411,8 +417,8 @@ class CodeBlock extends HTMLElement {
         // Send the data to the server
         this.runCode(code);
         break;
-      case CodeBlockActionButtonState.CANCEL:
-        this.cancelCode();
+      case CodeBlockActionButtonState.STOP:
+        this.stopRun();
         break;
       case CodeBlockActionButtonState.RECONNECT:
         this.connectWebSocket();

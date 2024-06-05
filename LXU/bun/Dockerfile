@@ -6,4 +6,4 @@ RUN chmod +x script.sh
 RUN chmod +x exit.sh
 
 # Run the application
-CMD ["/source/exit.sh"]
+ENTRYPOINT [ "cat" ]

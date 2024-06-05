@@ -6,7 +6,7 @@ import (
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/utility"
 )
 
-type langDefenition struct {
+type LangDefenition struct {
 	Language string `json:"language"`
 	Shorhand string `json:"shorthand"`
 	Image    string `json:"image"`
@@ -14,10 +14,10 @@ type langDefenition struct {
 }
 
 // map of language definitions
-var LangDefs = map[string]langDefenition{}
+var LangDefs = map[string]LangDefenition{}
 
 func ParseJSON(file string) error {
-	langList := []langDefenition{}
+	langList := []LangDefenition{}
 
 	// Read the file
 	err := utility.ReadJSON(file, &langList)
@@ -58,7 +58,7 @@ func StreamCode(code string, language string) (chan string, error) {
 	return runLang(langDef, code)
 }
 
-func runLang(langDef langDefenition, code string) (chan string, error) {
+func runLang(langDef LangDefenition, code string) (chan string, error) {
 	output, err := executeCodeOnImage(code, langDef.Image, langDef.Local)
 	if err != nil {
 		return nil, fmt.Errorf("Error executing code: %v", err)
