@@ -85,11 +85,18 @@ class CodeBlock extends HTMLElement {
         });
         dropdown.value = this.language;
       })
-      .catch((error) => console.error("Error:", error));
+      .catch((error) => {
+        console.error("Error:", error);
+        this.showToaster(
+          'Code-Block kan geen verbinding maken met de Code-Runner server. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
+          "warning",
+        );
+      });
   }
 
   render() {
-    this.shadowRoot.innerHTML = `
+    this.shadowRoot.innerHTML =
+      `
       <style>
       .minimal {
         margin: 0 !important;
@@ -174,6 +181,47 @@ class CodeBlock extends HTMLElement {
       .hidden {
         display: none;
       }
+      @keyframes slideInFromRight {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(0); }
+      }
+      @keyframes slideDown {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(300%); }
+      }
+      .toaster {
+        position: fixed;
+        z-index: 999;
+        bottom: 30px;
+        right: 30px;
+        width: 430px;
+        max-width: calc(100vw - 60px);
+        animation: slideInFromRight 0.5s ease;
+      }
+      .toaster-content {
+        padding: 20px;
+        border: 3px solid #ddd;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+        border-radius: 3px;
+      }
+      .close {
+        position: absolute;
+        top: 1px;
+        right: 10px;
+        float: right;
+        font-size: 26px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .slideDown { animation: slideDown 0.8s ease forwards; }
+      .toaster[type="danger"] .toaster-content {border-color: #f44336;}
+      .toaster[type="warning"] .toaster-content {border-color: #ff9800;}
+      .toaster[type="success"] .toaster-content {border-color: #4caf50;}
+      .toaster[type="info"] .toaster-content {border-color: #2196F3;}
+      .toaster[type="danger"] .toaster-content .close {color: #f44336;}
+      .toaster[type="warning"] .toaster-content .close {color: #ff9800;}
+      .toaster[type="success"] .toaster-content .close {color: #4caf50;}
+      .toaster[type="info"] .toaster-content .close {color: #2196F3;}
       </style>
       <div class="flexCol monaco-editor monaco-editor-background ${this.disabled ? "minimal" : ""}">
       ${
@@ -198,6 +246,14 @@ class CodeBlock extends HTMLElement {
           <pre id="output" class="coderunnerResult"></pre>
         </div>
       </div>
+      <div class="toaster hidden" id="toaster">
+        <div class="toaster-content monaco-editor monaco-editor-background">
+          ` +
+      this.createToasterDismissButton() +
+      `
+          <span id="toaster-message"></span>
+        </div>
+      </div>
     `;
   }
 
@@ -213,17 +269,21 @@ class CodeBlock extends HTMLElement {
     const clearButton = this.shadowRoot.getElementById("outputButton");
     const languageDropdown = this.shadowRoot.getElementById("language");
 
+    // Try to connect to the server
     const socket = new WebSocket(
       "ws://localhost:8080/codeSocket?language=" + this.language,
     );
-    this.socket = socket;
+
     // Check if the socket is open
-    this.socket.onopen = () => {
+    socket.onopen = () => {
       console.log("Connected to the server");
+      this.socket = socket;
+      runButton.disabled = false;
+      runButton.classList.remove("hidden");
       this.ping();
     };
 
-    this.socket.onmessage = (event) => {
+    socket.onmessage = (event) => {
       const data = event.data;
 
       const mapFunc = this.outputMap[data];
@@ -232,9 +292,20 @@ class CodeBlock extends HTMLElement {
     };
 
     // Check if the socket is closed
-    this.socket.onclose = () => {
+    socket.onclose = () => {
       console.log("Disconnected from the server");
       runButton.disabled = true;
+      runButton.classList.add("hidden");
+      if (this.socket)
+        this.showToaster(
+          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          "danger",
+        );
+      else
+        this.showToaster(
+          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          "danger",
+        );
       this.socket = null;
     };
 
@@ -252,8 +323,13 @@ class CodeBlock extends HTMLElement {
 
       if (this.running) return;
 
-      const code = monaco.editor.getModels()[0].getValue();
+      const code = this.monacoModel.getValue();
 
+      if (!this.socket)
+        return this.showToaster(
+          'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
+          "danger",
+        );
       // Send the data to the server
       this.socket.send(code);
       this.startRun();
@@ -379,6 +455,30 @@ class CodeBlock extends HTMLElement {
         e.detail.theme === "light" ? "vs-light" : "vs-dark",
       );
     });
+  }
+
+  showToaster(message, type) {
+    const toaster = this.shadowRoot.getElementById("toaster");
+    const toasterMessage = this.shadowRoot.getElementById("toaster-message");
+    toaster.setAttribute("type", type);
+    toaster.classList.remove("slideDown");
+    toaster.classList.remove("hidden");
+    toasterMessage.innerHTML = message;
+  }
+
+  createToasterDismissButton() {
+    const button = document.createElement("span");
+    button.innerHTML = "&times;";
+    button.classList.add("close");
+    button.setAttribute(
+      "onclick",
+      `
+      const toaster = this.parentElement.parentElement;
+      toaster.classList.add('slideDown');
+      setTimeout(() => { toaster.classList.add('hidden') }, 500)
+    `,
+    );
+    return button.outerHTML;
   }
 }
 
