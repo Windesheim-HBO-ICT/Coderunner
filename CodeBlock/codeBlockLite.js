@@ -10,7 +10,6 @@ class CodeBlock extends HTMLElement {
   connectedCallback() {
     // Initialize the component after the browser has finished rendering
     // This is necessary because we need the innerHTML of the component to be available
-    console.log("connected");
     window.requestAnimationFrame(() => {
       if (this.initialized) return;
       setTimeout(() => {
@@ -20,7 +19,6 @@ class CodeBlock extends HTMLElement {
   }
 
   init() {
-      console.log("initting");
     this.initProperties();
     this.render();
     this.initializeCodeRunner();
@@ -47,7 +45,6 @@ class CodeBlock extends HTMLElement {
 
     sandbox.remove();
 
-    console.log(this.code);
     this.innerHTML = '';
   }
 
