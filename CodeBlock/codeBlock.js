@@ -247,7 +247,7 @@ class CodeBlock extends HTMLElement {
         </div>
       </div>
       <div class="toaster hidden" id="toaster">
-        <div class="toaster-content monaco-editor-background">
+        <div class="toaster-content monaco-editor monaco-editor-background">
           ` +
       this.createToasterDismissButton() +
       `
@@ -269,17 +269,21 @@ class CodeBlock extends HTMLElement {
     const clearButton = this.shadowRoot.getElementById("outputButton");
     const languageDropdown = this.shadowRoot.getElementById("language");
 
+    // Try to connect to the server
     const socket = new WebSocket(
       "ws://localhost:8080/codeSocket?language=" + this.language,
     );
-    this.socket = socket;
+
     // Check if the socket is open
-    this.socket.onopen = () => {
+    socket.onopen = () => {
       console.log("Connected to the server");
+      this.socket = socket;
+      runButton.disabled = false;
+      runButton.classList.remove("hidden");
       this.ping();
     };
 
-    this.socket.onmessage = (event) => {
+    socket.onmessage = (event) => {
       const data = event.data;
 
       const mapFunc = this.outputMap[data];
@@ -288,9 +292,20 @@ class CodeBlock extends HTMLElement {
     };
 
     // Check if the socket is closed
-    this.socket.onclose = () => {
+    socket.onclose = () => {
       console.log("Disconnected from the server");
       runButton.disabled = true;
+      runButton.classList.add("hidden");
+      if (this.socket)
+        this.showToaster(
+          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          "danger",
+        );
+      else
+        this.showToaster(
+          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          "danger",
+        );
       this.socket = null;
     };
 
@@ -308,9 +323,9 @@ class CodeBlock extends HTMLElement {
 
       if (this.running) return;
 
-      const code = monaco.editor.getModels()[0].getValue();
+      const code = this.monacoModel.getValue();
 
-      if (this.socket.readyState !== WebSocket.OPEN)
+      if (!this.socket)
         return this.showToaster(
           'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
           "danger",
