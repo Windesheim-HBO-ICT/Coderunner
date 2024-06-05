@@ -9,10 +9,12 @@ class CodeBlock extends HTMLElement {
   connectedCallback() {
     // Initialize the component after the browser has finished rendering
     // This is necessary because we need the innerHTML of the component to be available
+    let initialized = false;
     window.requestAnimationFrame(() => {
+      if (initialized) return;
       setTimeout(() => {
         this.init();
-      })
+      });
     })
   }
 
