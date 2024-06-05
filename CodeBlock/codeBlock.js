@@ -20,7 +20,7 @@ class CodeBlock extends HTMLElement {
     ];
 
     this.outputMap = {
-      "-- START OUTPUT --": () => this.runCode(),
+      "-- START OUTPUT --": () => this.startRun(),
       "-- END OUTPUT --": () => this.endRun(),
       pong: () => this.ping(),
     };
@@ -176,11 +176,15 @@ class CodeBlock extends HTMLElement {
         border-radius: 0.5rem;
       }
       .loader {
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        cursor: default;
         border: 5px solid #f3f3f3;
         border-top: 5px solid #3498db;
         border-radius: 50%;
-        width: 35px;
-        height: 35px;
+        width: 100%;
+        height: 100%;
         color: transparent !important;
         animation: spin 2s linear infinite;
       }
@@ -374,20 +378,25 @@ class CodeBlock extends HTMLElement {
     this.ping();
   }
 
+  startRun() {
+    this.running = true;
+    this.setResults("");
+    this.updateActionButtonState();
+  }
+
   runCode(code) {
     if (!this.socket) {
       this.showToaster(
         'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
         "danger",
       );
-      return false;
+      return;
     }
 
     clearTimeout(this.pingTimeout);
-    this.setResults("");
-    this.running = true;
+    this.updateActionButtonState(CodeBlockActionButtonState.LOADING);
+    this.setResults("Preparing the code runner...");
     this.socket.send(code);
-    return true;
   }
 
   onActionButtonClick() {
@@ -395,8 +404,7 @@ class CodeBlock extends HTMLElement {
       case CodeBlockActionButtonState.RUN:
         const code = this.monacoModel.getValue();
         // Send the data to the server
-        if (this.runCode(code))
-          this.updateActionButtonState(CodeBlockActionButtonState.LOADING);
+        this.runCode(code);
         break;
       case CodeBlockActionButtonState.CANCEL:
         this.cancelCode();
@@ -540,10 +548,11 @@ const icons = Object.freeze({
     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
 </svg>`,
   [CodeBlockActionButtonState.NONE]: ``,
-  [CodeBlockActionButtonState.STOP]: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x">
-  <line x1="18" y1="6" x2="6" y2="18"></line>
-  <line x1="6" y1="6" x2="18" y2="18"></line>
-</svg>`,
+  [CodeBlockActionButtonState.STOP]: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9.563C9 9.252 9.252 9 9.563 9h4.874c.311 0 .563.252.563.563v4.874c0 .311-.252.563-.563.563H9.564A.562.562 0 0 1 9 14.437V9.564Z" />
+  </svg>
+`,
   [CodeBlockActionButtonState.LOADING]: `<div class="loader"></div>`,
 });
 
