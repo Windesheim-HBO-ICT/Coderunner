@@ -5,10 +5,10 @@ class CodeBlock extends HTMLElement {
       mode: "open",
     });
     this.imports = [
-      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css",
-      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js",
-      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/editor/editor.main.min.css",
+      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/loader.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/editor/editor.main.nls.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs/editor/editor.main.js",
     ];
 
     this.outputMap = {
@@ -16,11 +16,11 @@ class CodeBlock extends HTMLElement {
       "-- END OUTPUT --": () => this.endRun(),
       pong: () => this.ping(),
     };
+
+    this.lspServerUrl = "ws://localhost:2087"; // LSP server URL
   }
 
   connectedCallback() {
-    // Initialize the component after the browser has finished rendering
-    // This is necessary because we need the innerHTML of the component to be available
     window.requestAnimationFrame(() => {
       setTimeout(() => {
         this.init();
@@ -46,12 +46,8 @@ class CodeBlock extends HTMLElement {
     const sandbox = document.createElement("div");
 
     let rawCode = this.innerHTML;
-    // Create a sandbox element to parse HTML entities (e.g. &lt;)
     (rawCode.match(/&.+;/gi) || []).forEach((entity) => {
-      // Insert the HTML entity as HTML in an HTML element:
       sandbox.innerHTML = entity;
-
-      // Retrieve the HTML elements innerText to get the parsed entity (the actual character):
       rawCode = rawCode.replace(entity, sandbox.innerText);
     });
 
@@ -75,7 +71,6 @@ class CodeBlock extends HTMLElement {
           option.value = languageObject.language;
           option.text = languageObject.language;
           option.onclick = () => {
-            // set monaco editor language
             monaco.editor.setModelLanguage(
               this.monacoModel,
               languageObject.language.toLowerCase(),
@@ -383,7 +378,7 @@ class CodeBlock extends HTMLElement {
 
   loadMonacoResources() {
     const requireConfig = document.createElement("script");
-    requireConfig.innerHTML = `var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs' } };`;
+    requireConfig.innerHTML = `var require = { paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.49.0/min/vs' } };`;
     this.shadowRoot.appendChild(requireConfig);
 
     // Loader function for the resources
@@ -442,19 +437,20 @@ class CodeBlock extends HTMLElement {
         vertical: scrollbarsStyle,
         horizontal: scrollbarsStyle,
       },
-      // Read-only settings
       glyphMargin: !this.disabled,
       renderFinalNewline: !this.disabled,
       readOnly: this.disabled,
     });
-
+  
     console.log("This model created", this.monacoModel);
-
+  
     document.addEventListener("themechange", (e) => {
       monaco.editor.setTheme(
         e.detail.theme === "light" ? "vs-light" : "vs-dark",
       );
     });
+  
+    this.initializeLspClient();
   }
 
   showToaster(message, type) {
@@ -479,6 +475,106 @@ class CodeBlock extends HTMLElement {
     `,
     );
     return button.outerHTML;
+  }
+
+  initializeLspClient() {
+    const editor = this.monacoModel;
+    const documentUri = "inmemory://model/1"; // Virtuele URI
+
+    const sendMessage = (message) => {
+        if (this.lspSocket && this.lspSocket.readyState === WebSocket.OPEN) {
+            this.lspSocket.send(JSON.stringify(message));
+        }
+    };
+
+    this.lspSocket = new WebSocket(this.lspServerUrl);
+
+    this.lspSocket.onopen = () => {
+        console.log("Connected to LSP server");
+
+        sendMessage({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "initialize",
+            params: {
+                processId: null,
+                rootUri: null,
+                capabilities: {},
+            },
+        });
+
+        sendMessage({
+            jsonrpc: "2.0",
+            method: "textDocument/didOpen",
+            params: {
+                textDocument: {
+                    uri: documentUri,
+                    languageId: this.language || "javascript",
+                    version: 1,
+                    text: editor.getValue(),
+                },
+            },
+        });
+    };
+
+    this.lspSocket.onmessage = (event) => {
+        try {
+            const message = JSON.parse(event.data);
+            console.log("Received LSP message:", message);
+
+            if (message.method === "textDocument/publishDiagnostics") {
+                const diagnostics = message.params.diagnostics.map((diagnostic) => {
+                    return {
+                        startLineNumber: diagnostic.range.start.line + 1,
+                        startColumn: diagnostic.range.start.character + 1,
+                        endLineNumber: diagnostic.range.end.line + 1,
+                        endColumn: diagnostic.range.end.character + 1,
+                        message: diagnostic.message,
+                        severity: monaco.MarkerSeverity[diagnostic.severity] || monaco.MarkerSeverity.Error,
+                    };
+                });
+
+                monaco.editor.setModelMarkers(editor, "owner", diagnostics);
+            }
+        } catch (error) {
+            console.error("Error processing LSP message:", error);
+        }
+    };
+
+    this.lspSocket.onclose = () => {
+        console.log("Disconnected from LSP server");
+    };
+
+    editor.onDidChangeModelContent(() => {
+        sendMessage({
+            jsonrpc: "2.0",
+            method: "textDocument/didChange",
+            params: {
+                textDocument: {
+                    uri: documentUri,
+                    version: 1,
+                },
+                contentChanges: [{ text: editor.getValue() }],
+            },
+        });
+    });
+
+    editor.onDidChangeCursorPosition(() => {
+        const position = editor.getPosition();
+        sendMessage({
+            jsonrpc: "2.0",
+            method: "textDocument/hover",
+            params: {
+                textDocument: {
+                    uri: documentUri,
+                },
+                position: {
+                    line: position.lineNumber - 1,
+                    character: position.column - 1,
+                },
+            },
+        });
+    });
   }
 }
 
