@@ -46,7 +46,14 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	runner, err := lxu.StartLXUContainer(language)
+	languageDef, err := runner.GetLangDef(language)
+	if err != nil {
+		fmt.Println("Could not get language definition", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	runner, err := lxu.LXUM.CreateContainer(languageDef)
 	if err != nil {
 		fmt.Println("Could not start container", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,9 +72,11 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
 			continue
 		} else if string(message) == "stop" {
-			runner.Restart()
+			runner.Stop()
 			continue
 		}
+
+		println("Recieved message:", string(message))
 
 		go func() {
 			outputStream, err := runner.StreamCode(string(message))

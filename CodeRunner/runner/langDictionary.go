@@ -33,3 +33,12 @@ func ParseJSON(file string) error {
 
 	return nil
 }
+
+func GetLangDef(language string) (*LangDefenition, error) {
+	langDef, ok := LangDefs[language]
+	if !ok {
+		return nil, fmt.Errorf("Invalid language")
+	}
+
+	return &langDef, nil
+}

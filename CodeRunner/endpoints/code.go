@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/lxu"
+	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 )
 
 type CodeRequest struct {
@@ -31,7 +32,13 @@ func codeEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := lxu.RunCode(codeReq.Language, codeReq.Code)
+	languageDef, err := runner.GetLangDef(codeReq.Language)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	output, err := lxu.LXUM.RunCode(languageDef, codeReq.Code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

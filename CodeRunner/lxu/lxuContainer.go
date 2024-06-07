@@ -13,71 +13,19 @@ type LXUContainer struct {
 	containerID string
 }
 
-func RunCode(language string, code string) (string, error) {
-	langDef, ok := runner.LangDefs[language]
-	if !ok {
-		return "", fmt.Errorf("Invalid language")
-	}
-
-	lxuContainer, err := StartLXUContainer(langDef.Language)
-	if err != nil {
-		return "", err
-	}
-	defer lxuContainer.Stop()
-
-	output, err := lxuContainer.RunCode(code)
-	if err != nil {
-		return "", err
-	}
-
-	return output, nil
-}
-
-func StartLXUContainer(language string) (*LXUContainer, error) {
-	langDef, ok := runner.LangDefs[language]
-	if !ok {
-		return nil, fmt.Errorf("Invalid language")
-	}
-
+func CreateLXUContainer(langDef runner.LangDefenition) (LXUContainer, error) {
 	containerID, err := utility.StartContainer(langDef.Image, langDef.Local)
 	if err != nil {
-		return nil, err
+		return LXUContainer{}, err
 	}
 
 	fmt.Printf("Started container: %v\n", containerID)
 
-	return &LXUContainer{
+	return LXUContainer{
 		languageDef: langDef,
 		isActive:    true,
 		containerID: containerID,
 	}, nil
-}
-
-func (lxu *LXUContainer) RunCode(code string) (string, error) {
-	if !lxu.isActive {
-		return "", fmt.Errorf("Container is not active")
-	}
-
-	stream, err := lxu.StreamCode(code)
-	if err != nil {
-		return "", err
-	}
-
-	output := ""
-	// Read the output from the stream until it's closed
-	for line := range stream {
-		output += line
-	}
-
-	return output, nil
-}
-
-func (lxu *LXUContainer) StreamCode(code string) (chan string, error) {
-	if !lxu.isActive {
-		return nil, fmt.Errorf("Container is not active")
-	}
-
-	return utility.RunCodeOnContainer(code, lxu.containerID)
 }
 
 func (lxu *LXUContainer) Restart() error {
@@ -117,4 +65,19 @@ func (lxu *LXUContainer) Stop() error {
 	lxu.isActive = false
 
 	return nil
+}
+
+func (lxu *LXUContainer) GetImageName() string {
+	return lxu.languageDef.Image
+}
+
+func (lxu *LXUContainer) CreateLXUReference() *LXUReference {
+	input, output := utility.CreateChannelPair(lxu.containerID)
+
+	fmt.Println("Created channel pair for container: ", lxu.containerID)
+
+	return &LXUReference{
+		output: output,
+		input:  input,
+	}
 }
