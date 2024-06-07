@@ -179,6 +179,7 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 								Payload:       "",
 								OutputCommand: EndCodeOutput,
 							}
+							close(cmdOutput)
 						}()
 
 						// Read the error of the command
@@ -201,6 +202,7 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 							}
 						}
 
+						println("Starting wait")
 						// Wait for the command to finish
 						if err := cmd.Wait(); err != nil {
 							println("Error waiting for command", err.Error())
