@@ -358,6 +358,7 @@ class CodeBlock extends HTMLElement {
           "danger",
         );
 
+      this.isRunning = false;
       this.socket = null;
       this.updateActionButtonState();
     };
