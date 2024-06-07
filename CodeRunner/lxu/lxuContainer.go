@@ -74,8 +74,6 @@ func (lxu *LXUContainer) GetImageName() string {
 func (lxu *LXUContainer) CreateLXUReference() *LXUReference {
 	input, output := utility.CreateChannelPair(lxu.containerID)
 
-	fmt.Println("Created channel pair for container: ", lxu.containerID)
-
 	return &LXUReference{
 		output: output,
 		input:  input,

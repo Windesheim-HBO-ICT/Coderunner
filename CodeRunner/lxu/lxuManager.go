@@ -29,8 +29,6 @@ func (lxum *LXUManager) CreateContainer(languageDef *runner.LangDefenition) (*LX
 		return nil, err
 	}
 
-	println("Could not find container, creating new one.", lxu.containerID)
-
 	imageName := lxu.GetImageName()
 	lxum.containers[imageName] = lxu
 

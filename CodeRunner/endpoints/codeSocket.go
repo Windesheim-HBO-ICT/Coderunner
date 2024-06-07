@@ -76,8 +76,6 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		println("Recieved message:", string(message))
-
 		go func() {
 			outputStream, err := runner.StreamCode(string(message))
 			if err != nil {

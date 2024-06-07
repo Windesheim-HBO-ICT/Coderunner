@@ -36,7 +36,6 @@ func (lxu *LXUReference) Stop() {
 }
 
 func (lxu *LXUReference) StreamCode(code string) (chan string, error) {
-	println("Sending code to container", code)
 	lxu.input <- utility.InputCommand{
 		InputCommand: utility.RunCode,
 		Payload:      code,

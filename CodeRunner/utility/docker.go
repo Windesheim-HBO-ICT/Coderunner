@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -102,18 +101,14 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 	input := make(chan InputCommand)
 	output := make(chan OutputCommand)
 
-	println("Creating channel pair", containerID)
-
 	go func() {
 		defer close(input)
-		defer fmt.Println("Closing input channel")
 		defer close(output)
 
 		var cmd *exec.Cmd
 
 		// Based on the input command, do something
 		for command := range input {
-			fmt.Printf("Received command: %v\n", command)
 			switch command.InputCommand {
 			case RunCode:
 				if cmd != nil {
@@ -125,7 +120,6 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 					continue
 				}
 
-				println("Running code")
 				code := command.Payload
 				// Run the code
 				err := func() error {
@@ -190,7 +184,7 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 								if err != nil {
 									break
 								}
-								cmdOutput <- string(buf[:n])
+								cmdOutput <- "error: " + string(buf[:n])
 							}
 						}()
 
@@ -202,13 +196,9 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 							}
 						}
 
-						println("Starting wait")
 						// Wait for the command to finish
-						if err := cmd.Wait(); err != nil {
-							println("Error waiting for command", err.Error())
-						}
+						cmd.Wait()
 
-						println("Closing cmdOutput")
 						cmd = nil
 					}()
 
@@ -223,21 +213,18 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 
 					continue
 				}
-
-				println("Code is running")
 			case Stop:
-				println("Stopping code", cmd == nil)
 				if cmd == nil {
 					continue
 				}
 
-				// Stop the command
-				err := cmd.Process.Signal(os.Kill)
+				err := cmd.Process.Kill()
 				if err != nil {
 					println("Error stopping command", err.Error())
 				}
 
-				cmd = nil
+				// Wait for the command to finish
+				cmd.Wait()
 			}
 		}
 	}()
@@ -246,7 +233,6 @@ func CreateChannelPair(containerID string) (chan InputCommand, chan OutputComman
 }
 
 func RunCodeOnContainer(containerID, code string) (*exec.Cmd, error) {
-	println("Running code on container", code, containerID)
 	// Run this command: docker exec -i container_id2 sh -c 'cat > ./bar/foo.txt' < ./input.txt
 	cmd := exec.Command("docker", "exec", "-i", containerID, "sh", "-c", "cat > /input.txt")
 
