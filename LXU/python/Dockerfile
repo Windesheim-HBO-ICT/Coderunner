@@ -5,4 +5,4 @@ COPY script.sh script.sh
 RUN chmod +x script.sh
 
 # Run the application
-CMD ["cat"]
+ENTRYPOINT ["cat"]
