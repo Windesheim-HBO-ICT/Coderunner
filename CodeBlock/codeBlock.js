@@ -358,7 +358,7 @@ class CodeBlock extends HTMLElement {
           "danger",
         );
 
-      this.isRunning = false;
+      this.running = false;
       this.socket = null;
       this.updateActionButtonState();
     };
@@ -391,7 +391,11 @@ class CodeBlock extends HTMLElement {
   }
 
   stopRun() {
-    if (!this.socket) return;
+    if (!this.socket) {
+      this.running = false;
+      this.updateActionButtonState();
+      return;
+    }
 
     this.socket.send("stop");
   }
