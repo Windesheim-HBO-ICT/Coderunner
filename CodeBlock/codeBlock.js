@@ -101,6 +101,10 @@ class CodeBlock extends HTMLElement {
           "warning",
         );
       });
+
+    dropdown.onchange = () => {
+      this.changeLanguage(dropdown.value);
+    };
   }
 
   render() {
@@ -312,8 +316,14 @@ class CodeBlock extends HTMLElement {
 
   connectWebSocket() {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.updateActionButtonState(CodeBlockActionButtonState.LOADING);
+      this.socket.onclose = () => {
+        this.socket = null;
+        this.connectWebSocket();
+      };
       this.socket.close();
-      this.socket = null;
+
+      return;
     }
 
     // Try to connect to the server
@@ -362,6 +372,11 @@ class CodeBlock extends HTMLElement {
       this.socket = null;
       this.updateActionButtonState();
     };
+  }
+
+  changeLanguage(newLanguage) {
+    this.language = newLanguage;
+    this.connectWebSocket();
   }
 
   ping() {
