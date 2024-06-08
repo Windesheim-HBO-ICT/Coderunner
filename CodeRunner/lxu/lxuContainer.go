@@ -58,14 +58,17 @@ func (lxu *LXUContainer) Stop() error {
 		return fmt.Errorf("Container is not active")
 	}
 
+	if len(lxu.references) > 0 {
+		return fmt.Errorf("Container still has active references")
+	}
+
 	fmt.Printf("Stopping container: %v", lxu.containerID)
+	lxu.isActive = false
 
 	err := utility.StopContainer(lxu.containerID)
 	if err != nil {
 		return err
 	}
-
-	lxu.isActive = false
 
 	return nil
 }

@@ -31,11 +31,13 @@ func (lxu *LXUReference) RunCode(code string) (string, error) {
 	return output, nil
 }
 
-func (lxu *LXUReference) Stop() {
+func (lxu *LXUReference) StopCodeStream() {
 	lxu.input <- utility.InputCommand{
 		InputCommand: utility.Stop,
 	}
+}
 
+func (lxu *LXUReference) Destroy() {
 	lxu.parent.RemoveReference(lxu.id)
 }
 

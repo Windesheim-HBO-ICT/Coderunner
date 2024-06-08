@@ -59,7 +59,8 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer runner.Stop()
+	defer runner.Destroy()
+	defer fmt.Println("Connection closed")
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -72,7 +73,7 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
 			continue
 		} else if string(message) == "stop" {
-			runner.Stop()
+			runner.StopCodeStream()
 			continue
 		}
 
