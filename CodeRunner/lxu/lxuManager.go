@@ -5,23 +5,25 @@ import (
 )
 
 type LXUManager struct {
-	containers  map[string]LXUContainer
-	subscribers map[string][]chan string
+	containers map[string]*LXUContainer
 }
 
 func NewLXUManager() *LXUManager {
 	return &LXUManager{
-		containers:  make(map[string]LXUContainer),
-		subscribers: make(map[string][]chan string),
+		containers: make(map[string]*LXUContainer),
 	}
 }
 
 var LXUM *LXUManager = NewLXUManager()
 
-func (lxum *LXUManager) CreateContainer(languageDef *runner.LangDefenition) (*LXUReference, error) {
+func (lxum *LXUManager) GetContainer(languageDef *runner.LangDefenition) (*LXUContainer, error) {
 	lxu, ok := lxum.containers[languageDef.Image]
 	if ok {
-		return lxu.CreateLXUReference(), nil
+		if lxu.isActive {
+			return lxu, nil
+		}
+
+		delete(lxum.containers, languageDef.Image)
 	}
 
 	lxu, err := CreateLXUContainer(*languageDef)
@@ -32,11 +34,22 @@ func (lxum *LXUManager) CreateContainer(languageDef *runner.LangDefenition) (*LX
 	imageName := lxu.GetImageName()
 	lxum.containers[imageName] = lxu
 
-	return lxu.CreateLXUReference(), nil
+	return lxu, nil
+}
+
+func (lxum *LXUManager) CreateContainerRef(languageDef *runner.LangDefenition) (*LXUReference, error) {
+	lxu, err := lxum.GetContainer(languageDef)
+	if err != nil {
+		return nil, err
+	}
+
+	lxur := lxu.CreateLXUReference()
+
+	return lxur, nil
 }
 
 func (lxum *LXUManager) RunCode(languageDef *runner.LangDefenition, code string) (string, error) {
-	lxu, err := lxum.CreateContainer(languageDef)
+	lxu, err := lxum.CreateContainerRef(languageDef)
 	if err != nil {
 		return "", err
 	}

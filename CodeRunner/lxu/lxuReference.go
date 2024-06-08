@@ -7,8 +7,10 @@ import (
 )
 
 type LXUReference struct {
+	id     string
 	output chan utility.OutputCommand
 	input  chan utility.InputCommand
+	parent *LXUContainer
 }
 
 func (lxu *LXUReference) RunCode(code string) (string, error) {
@@ -33,6 +35,8 @@ func (lxu *LXUReference) Stop() {
 	lxu.input <- utility.InputCommand{
 		InputCommand: utility.Stop,
 	}
+
+	lxu.parent.RemoveReference(lxu.id)
 }
 
 func (lxu *LXUReference) StreamCode(code string) (chan string, error) {

@@ -53,7 +53,7 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	runner, err := lxu.LXUM.CreateContainer(languageDef)
+	runner, err := lxu.LXUM.CreateContainerRef(languageDef)
 	if err != nil {
 		fmt.Println("Could not start container", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

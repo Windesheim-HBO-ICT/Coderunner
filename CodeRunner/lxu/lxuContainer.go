@@ -2,6 +2,7 @@ package lxu
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/utility"
@@ -11,20 +12,22 @@ type LXUContainer struct {
 	languageDef runner.LangDefenition
 	isActive    bool
 	containerID string
+	references  map[string]*LXUReference
 }
 
-func CreateLXUContainer(langDef runner.LangDefenition) (LXUContainer, error) {
+func CreateLXUContainer(langDef runner.LangDefenition) (*LXUContainer, error) {
 	containerID, err := utility.StartContainer(langDef.Image, langDef.Local)
 	if err != nil {
-		return LXUContainer{}, err
+		return nil, err
 	}
 
 	fmt.Printf("Started container: %v\n", containerID)
 
-	return LXUContainer{
+	return &LXUContainer{
 		languageDef: langDef,
 		isActive:    true,
 		containerID: containerID,
+		references:  make(map[string]*LXUReference),
 	}, nil
 }
 
@@ -74,8 +77,23 @@ func (lxu *LXUContainer) GetImageName() string {
 func (lxu *LXUContainer) CreateLXUReference() *LXUReference {
 	input, output := utility.CreateChannelPair(lxu.containerID)
 
-	return &LXUReference{
+	// Create a uid for the reference based on the image name and a unix timestamp
+	uid := fmt.Sprintf("%v-%v", lxu.GetImageName(), time.Now().Unix())
+
+	lxu.references[uid] = &LXUReference{
 		output: output,
 		input:  input,
+		id:     uid,
+		parent: lxu,
+	}
+
+	return lxu.references[uid]
+}
+
+func (lxu *LXUContainer) RemoveReference(uid string) {
+	delete(lxu.references, uid)
+
+	if len(lxu.references) == 0 {
+		lxu.Stop()
 	}
 }
