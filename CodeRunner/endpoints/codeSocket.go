@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/lxu"
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 	"github.com/gorilla/websocket"
 )
@@ -45,6 +46,22 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	languageDef, err := runner.GetLangDef(language)
+	if err != nil {
+		fmt.Println("Could not get language definition", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	runner, err := lxu.LXUM.CreateContainerRef(languageDef)
+	if err != nil {
+		fmt.Println("Could not start container", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer runner.Destroy()
+	defer fmt.Println("Connection closed")
+
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
@@ -55,25 +72,29 @@ func codeWebsocket(w http.ResponseWriter, r *http.Request) {
 		if string(message) == "ping" {
 			conn.WriteMessage(websocket.TextMessage, []byte("pong"))
 			continue
-		}
-
-		outputStream, err := runner.StreamCode(string(message), language)
-		if err != nil {
-			fmt.Println("Could not run code", err)
-			conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		} else if string(message) == "stop" {
+			runner.StopCodeStream()
 			continue
 		}
 
-		conn.WriteMessage(websocket.TextMessage, []byte("-- START OUTPUT --"))
-
-		for output := range outputStream {
-			err = conn.WriteMessage(websocket.TextMessage, []byte(output))
+		go func() {
+			outputStream, err := runner.StreamCode(string(message))
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				continue
+				fmt.Println("Could not run code", err)
+				conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 			}
-		}
 
-		conn.WriteMessage(websocket.TextMessage, []byte("-- END OUTPUT --"))
+			conn.WriteMessage(websocket.TextMessage, []byte("-- START OUTPUT --"))
+
+			for output := range outputStream {
+				err = conn.WriteMessage(websocket.TextMessage, []byte(output))
+				if err != nil {
+					fmt.Println("Could not write message", err)
+					return
+				}
+			}
+
+			conn.WriteMessage(websocket.TextMessage, []byte("-- END OUTPUT --"))
+		}()
 	}
 }

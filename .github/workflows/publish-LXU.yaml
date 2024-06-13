@@ -4,17 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'New version number'
+        description: "New version number"
         required: true
         type: string
 
   workflow_call:
     inputs:
       tag:
-        description: 'New version number'
+        description: "New version number"
         required: true
         type: string
-        
+
 # Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
 env:
   REGISTRY: ghcr.io
@@ -40,6 +40,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Push all images in the LXU directory
-        run: find ./LXU -type d -mindepth 1 -exec bash -c 'dir="${0:2}"; dir_lowercase="${dir,,}";cd "$0" && docker build --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"$dir_lowercase":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"$dir_lowercase":latest .' {} \;
+        run: find ./LXU -type d -mindepth 1 -maxdepth 1 -exec bash -c 'dir="${0:2}"; dir_lowercase="${dir,,}";cd "$0" && pwd && cat *.sh && docker build --no-cache --push --tag ghcr.io/${{ env.IMAGE_NAME }}/"$dir_lowercase":${{ inputs.tag }} --tag ghcr.io/${{ env.IMAGE_NAME }}/"$dir_lowercase":latest .' {} \;
       - name: Cleanup docker images
         run: docker image prune -f -a

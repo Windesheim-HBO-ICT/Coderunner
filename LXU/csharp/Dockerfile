@@ -7,7 +7,6 @@ RUN dotnet restore
 
 COPY *.sh .
 RUN chmod +x script.sh
-RUN chmod +x exit.sh
 
 # Run the container while input is supplied
-ENTRYPOINT ["/source/exit.sh"]
+ENTRYPOINT ["cat"]
