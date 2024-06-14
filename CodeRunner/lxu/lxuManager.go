@@ -1,11 +1,14 @@
 package lxu
 
 import (
+	"sync"
+
 	"github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner/runner"
 )
 
 type LXUManager struct {
-	containers map[string]*LXUContainer
+	containers      map[string]*LXUContainer
+	containersMutex sync.Mutex
 }
 
 func NewLXUManager() *LXUManager {
@@ -17,6 +20,9 @@ func NewLXUManager() *LXUManager {
 var LXUM *LXUManager = NewLXUManager()
 
 func (lxum *LXUManager) GetContainer(languageDef *runner.LangDefenition) (*LXUContainer, error) {
+	lxum.containersMutex.Lock()
+	defer lxum.containersMutex.Unlock()
+
 	lxu, ok := lxum.containers[languageDef.Image]
 	if ok {
 		if lxu.isActive {
