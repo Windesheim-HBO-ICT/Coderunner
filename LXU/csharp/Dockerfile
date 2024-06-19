@@ -1,5 +1,4 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0
-ARG TARGETARCH
+FROM mcr.microsoft.com/dotnet/sdk:8.0
 WORKDIR /source
 
 COPY *.csproj .
