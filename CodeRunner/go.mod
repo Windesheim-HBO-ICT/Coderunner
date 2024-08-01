@@ -3,7 +3,7 @@ module github.com/Windesheim-HBO-ICT/Deeltaken/CodeRunner
 go 1.22.0
 
 require (
-	github.com/docker/docker v26.0.2+incompatible
+	github.com/docker/docker v26.1.4+incompatible
 	github.com/gorilla/websocket v1.5.1
 )
 
