@@ -97,7 +97,7 @@ class CodeBlock extends HTMLElement {
       .catch((error) => {
         console.error("Error:", error);
         this.showToaster(
-          'Code-Block kan geen verbinding maken met de Code-Runner server. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
+          'Code-Block kan geen verbinding maken met de Code-Runner server. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Coderunner/wiki/Getting-Started">documentatie</a> voor meer informatie.',
           "warning",
         );
       });
@@ -359,12 +359,12 @@ class CodeBlock extends HTMLElement {
 
       if (this.socket)
         this.showToaster(
-          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/Coderunner">documentatie</a> voor meer informatie.',
           "danger",
         );
       else
         this.showToaster(
-          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/code-runner">documentatie</a> voor meer informatie.',
+          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/Coderunner">documentatie</a> voor meer informatie.',
           "danger",
         );
 
@@ -418,7 +418,7 @@ class CodeBlock extends HTMLElement {
   runCode(code) {
     if (!this.socket) {
       this.showToaster(
-        'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Deeltaken/wiki/Getting-Started">documentatie</a> voor meer informatie.',
+        'Code-Block kon de code niet naar de Code-Runner server sturen. Lees de <a target="_blank" href="https://github.com/Windesheim-HBO-ICT/Coderunner/wiki/Getting-Started">documentatie</a> voor meer informatie.',
         "danger",
       );
       return;
