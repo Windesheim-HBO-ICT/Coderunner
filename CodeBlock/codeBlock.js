@@ -111,12 +111,6 @@ class CodeBlock extends HTMLElement {
     this.shadowRoot.innerHTML =
       `
       <style>
-      .minimal {
-        margin: 0 !important;
-        padding: 0 !important;
-        box-sizing: border-box !important;
-        border: none !important;
-      }
       .coderunnerContainer {
         overflow: auto;
         resize: vertical;
@@ -144,6 +138,9 @@ class CodeBlock extends HTMLElement {
         box-sizing: border-box;
         padding: 0.75rem 1.25rem;
       }
+      .coderunnerHeader select {
+        border-radius: 0.375rem;
+      }
       .absolute {
         position: absolute;
       }
@@ -159,6 +156,9 @@ class CodeBlock extends HTMLElement {
         background: none;
         border: none;
       }
+      .actionButton:hover {
+        color: green;
+      }
       .coderunnerOutputContainer {
         border-top: 1px solid #ddd;
         padding: 0.3rem 1rem;
@@ -170,10 +170,12 @@ class CodeBlock extends HTMLElement {
       }
       .clearButton {
         cursor: pointer;
-        border: black 1px solid;
-        padding: 0.5rem;
+        padding: 0.5rem 0.75rem 0.5rem 0.75rem;
         font-size: 1.25rem;
-        color: #333;
+        color: #fff;
+        background-color: var(--quaternary);
+        border-radius: 0.375rem;
+        border: 0px;
       }
       .coderunnerResult {
         padding: 1.25rem;
@@ -359,12 +361,12 @@ class CodeBlock extends HTMLElement {
 
       if (this.socket)
         this.showToaster(
-          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/Coderunner">documentatie</a> voor meer informatie.',
+          'Verbinding met de Code-Runner server verbroken. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/coderunner">documentatie</a> voor meer informatie.',
           "danger",
         );
       else
         this.showToaster(
-          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/Coderunner">documentatie</a> voor meer informatie.',
+          'Code-Runner server niet gevonden. Lees de <a target="_blank" href="https://github.com/windesheim-hbo-ict/coderunner">documentatie</a> voor meer informatie.',
           "danger",
         );
 
@@ -535,12 +537,22 @@ class CodeBlock extends HTMLElement {
       glyphMargin: !this.disabled,
       renderFinalNewline: !this.disabled,
       readOnly: this.disabled,
+      // Set the minimum number of characters for line numbers
+      lineNumbersMinChars: 2,
     });
 
     document.addEventListener("themechange", (e) => {
       monaco.editor.setTheme(
         e.detail.theme === "light" ? "vs-light" : "vs-dark",
       );
+    });
+
+    // Add event listener to adjust height dynamically
+    this.monacoModel.onDidChangeModelContent(() => {
+      const model = this.monacoModel.getModel();
+      const lineCount = model.getLineCount();
+      const newHeight = (lineCount + 1) * 1.15 + "rem";
+      editorContainer.style.height = newHeight;
     });
   }
 
