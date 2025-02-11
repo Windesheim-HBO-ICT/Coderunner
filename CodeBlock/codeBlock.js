@@ -14,6 +14,7 @@ class CodeBlock extends HTMLElement {
     });
     this.imports = [
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.min.css",
+      "https://cdn.jsdelivr.net/npm/vscode-codicons@0.0.17/dist/codicon.min.css",
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/loader.min.js",
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.nls.js",
       "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.26.1/min/vs/editor/editor.main.js",
