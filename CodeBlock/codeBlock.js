@@ -562,7 +562,7 @@ class CodeBlock extends HTMLElement {
     this.monacoModel.onDidChangeModelContent(() => {
       const model = this.monacoModel.getModel();
       const lineCount = model.getLineCount();
-      const newHeight = (lineCount + 1) * 1.15 + "rem";
+      const newHeight = lineCount * 1.2 + "rem";
       editorContainer.style.height = newHeight;
     });
   }
