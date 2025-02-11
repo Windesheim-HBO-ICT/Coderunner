@@ -76,7 +76,7 @@ class CodeBlock extends HTMLElement {
 
   createLanguageDropdown() {
     const dropdown = this.shadowRoot.querySelector("select");
-    fetch("http://localhost:8080/languages")
+    fetch("http://localhost:6060/languages")
       .then((response) => response.json())
       .then((languages) => {
         languages.forEach((languageObject) => {
@@ -330,7 +330,7 @@ class CodeBlock extends HTMLElement {
 
     // Try to connect to the server
     const socket = new WebSocket(
-      "ws://localhost:8080/codeSocket?language=" + this.language,
+      "ws://localhost:6060/codeSocket?language=" + this.language,
     );
 
     // Check if the socket is open

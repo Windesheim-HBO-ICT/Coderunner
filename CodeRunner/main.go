@@ -18,8 +18,8 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		fmt.Println("No port specified, using 8080")
-		port = "8080"
+		fmt.Println("No port specified, using 6060")
+		port = "6060"
 	}
 
 	router := http.NewServeMux()

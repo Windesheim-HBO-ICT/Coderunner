@@ -4,5 +4,5 @@
 
 ## Opstarten
 ```
-docker run -v /var/run/docker.sock:/var/run/docker.sock -p 8080:8080 --rm -d ghcr.io/windesheim-hbo-ict/coderunner
+docker run -v /var/run/docker.sock:/var/run/docker.sock -p 6060:6060 --rm -d ghcr.io/windesheim-hbo-ict/coderunner
 ```

@@ -16,5 +16,5 @@ To run the Docker container:
 
 ```bash
 docker build -t coderunner .
-docker run -p 8080:8080 coderunner
+docker run -p 6060:6060 coderunner
 ```
