@@ -114,7 +114,7 @@ class CodeBlock extends HTMLElement {
       .coderunnerContainer {
         overflow: auto;
         resize: vertical;
-        height: ${this.code.split("\n").length + 1 * 1.5}rem;
+        height: ${(this.code.split("\n").length) * 1.2}rem;
         min-height: 100px;
       }
       .flexCol {
@@ -480,6 +480,9 @@ class CodeBlock extends HTMLElement {
     // Loader function for the resources
     const loadResource = (resource) => {
       return new Promise((resolve, reject) => {
+        if (document.querySelector(`[src='${resource}'], [href='${resource}']`)) {
+          return resolve(); // Already imported
+        }
         const node = resource.endsWith(".css")
           ? document.createElement("link")
           : document.createElement("script");
@@ -491,7 +494,14 @@ class CodeBlock extends HTMLElement {
         }
         node.onload = resolve;
         node.onerror = reject;
-        this.shadowRoot.appendChild(node);
+        if (resource.endsWith(".css")){
+          console.log(resource);
+          this.shadowRoot.appendChild(node);
+        }
+        else{
+          console.log(resource);
+          document.body.appendChild(node);
+        }
       });
     };
 
